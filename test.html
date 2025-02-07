@@ -1,0 +1,49 @@
+<!-- This is the most basic way to get the map onto the webpage -->
+<!-- The API key is not included here, and it should always be kept private -->
+<!-- Keeping the API Key safe is our next step -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+</head>
+
+<style>
+    #container{
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    #map{
+        height: 90vh;
+        width: 90vh;
+    }
+    html, body{
+        margin: 0;
+        padding: 0;
+    }
+</style>
+
+<body>
+    <div id="container">
+        <div id = "map"></div>
+    </div>
+    <script>
+        function initMap(){
+
+            let mapOptions = {
+                center: {lat: 40.768538, lng: -73.964741}, //Hunter College
+                zoom: 15,
+
+            }
+            let map = new google.maps.Map(document.getElementById("map"), mapOptions);
+        }
+    </script>
+
+    <!-- Make sure to insert your API Key Below -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=INSERT_APIKEY_HERE&callback=initMap"></script>
+</body>
+</html>
