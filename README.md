@@ -16,3 +16,5 @@ then run:
 ```bash
 nodemon server.js
 ```
+*DO NOT UPLOAD YOUR .env FILE TO GITHUB*
+Instead, make a .gitignore file and list your .env file in it (look at my .gitignore for reference)
