@@ -1,0 +1,18 @@
+#container {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#map {
+    height: 80vh;
+    width: 80vh;
+    background-color: blue;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
