@@ -1,3 +1,11 @@
+body>nav {
+    padding-top: 2%;
+    align-items: center;
+    text-align: center;
+
+}
+
+
 #container {
     height: 100vh;
     display: flex;
