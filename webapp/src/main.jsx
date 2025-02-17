@@ -12,6 +12,9 @@ import {
 // Pages
 // Basic pages
 import Bananas from './components/views/bananas.jsx';
+import ErrorPagee from './components/views/error-page.jsx';
+
+
 // Better pages (containers)
 
 // Router
@@ -19,7 +22,7 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <App />, // Homepage should be here
-    //ErrorPage: <ErrorPage />
+    errorElement: <ErrorPagee />
   },
   {
     path: "/banana",
