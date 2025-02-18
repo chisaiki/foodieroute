@@ -1,6 +1,6 @@
 import { useRouteError } from "react-router-dom";
 import { useState } from "react";
-// import "./styles/tailwindStyle.css"
+import "../styles/tailwindStyle.css"
 
 export default function Bananas() {
   const error = useRouteError();
@@ -43,16 +43,22 @@ export default function Bananas() {
   ));
 
   return (
-    <div  id="banana-page" >
-      <div>{bananasDynanamic}</div>
-      {/* <img src="https://i.imgur.com/Mudezu4.png" alt="banana" className="banana"></img>
-      <img src="https://i.imgur.com/Mudezu4.png" alt="banana" className="banana"></img>
-      <img src="https://i.imgur.com/Mudezu4.png" alt="banana" className="banana"></img> */}
-      
-      <div>
-      <button  onClick={addBanana}> Add Banana</button>
-      <button  onClick={removeBanana}> Remove Banana</button>
+    <div  id="banana-page" className="center-banana" >
+      <div id="IUseThisToCenterEverything">
+        <div className="flex flex-row flex-wrap justify-center gap-4 w-full max-w-[1000px] " >{bananasDynanamic}</div>
+        {/* <img src="https://i.imgur.com/Mudezu4.png" alt="banana" className="banana"></img>
+        <img src="https://i.imgur.com/Mudezu4.png" alt="banana" className="banana"></img>
+        <img src="https://i.imgur.com/Mudezu4.png" alt="banana" className="banana"></img> */}
+        
+        <div className="flex flex-row gap-8 justify-center">
+          <button  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded"
+           onClick={addBanana}> Add Banana</button>
+          <button  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded"
+          onClick={removeBanana}> Remove Banana</button>
+        </div>
+
       </div>
+
 
     </div>
     
