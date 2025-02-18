@@ -16,18 +16,23 @@ import ErrorPagee from './components/views/error-page.jsx';
 
 
 // Better pages (containers)
+import HomeContainer  from './components/containers/HomeContainer.jsx';
 
 // Router
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />, // Homepage should be here
+    element: <HomeContainer />, // Homepage should be here
     errorElement: <ErrorPagee />
   },
   {
     path: "/banana",
     element: <Bananas />,
-  }
+  },
+  {
+    path: "/og",
+    element: <App />,
+  },
 ]);
 
 

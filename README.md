@@ -12,5 +12,9 @@
 # You may need to run 
 npm install react-router-dom
 npm install firebase
+npm install react-redux
+
+
+# If your node doesn't work
 
 

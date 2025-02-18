@@ -1,0 +1,25 @@
+/* Stuff we made Before tailwind */
+
+.temp-nav-bar {
+  position: fixed; /* Keeps the navbar fixed at the top */
+  top: 0; /* Aligns it to the top of the page */
+  left: 0;
+  width: 100%; /* Full width */
+  height: 60px; /* Adjust height as needed */
+  /* display: flex; 
+  justify-content: space-between; 
+  align-items: center; Centers items vertically */
+  /* padding: 0 20px;  */
+  background-color: #dadada; 
+}
+
+.temp-nav-bar2 {
+  height:  100%;
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+
+  padding: 0 20px;
+  
+  /* text-align: center; */
+}
