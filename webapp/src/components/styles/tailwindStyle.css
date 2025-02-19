@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+
+/* Not sure if we should have one css file or multiple tbh */
+
+.maingridwraper{
+  height: 100%; /* Ensure full height is available */
+  margin: 0; 
+  /* border: 5px solid red; */
+  /* display: flex;
+  flex-direction: column; */
+}
+
+.maingrid {
+  /* border: 5px solid red; */
+  width: 100%;
+  height: 100%;
+  /* min-height: 100%; */
+  /* height: 100vh; */
+  height: calc(100vh - 60px) !important;
+  /* height: 100%; */
+  /* flex-grow: 1; */
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  /* grid-template-rows: 1fr min-content; */
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "one two"
+    "one three"
+  
+}
+
+.mainGridOne {
+  background: rgba(255, 0, 0, 0.352);
+  grid-area: one;
+  min-width: 400px;
+}
+
+.mainGridTwo {
+  background: rgba(0, 128, 0, 0.357);
+  grid-area: two;
+  height: 100%;
+  min-height: 100%;
+}
+
+.mainGridThree {
+  background: rgba(0, 0, 255, 0.354);
+  grid-area: three;
+  min-height:  300px;
+}
+
+
+
+/* banana page for fun  */
+
+
+.center-banana {
+  display: flex;
+  justify-content: center;
+}
+
