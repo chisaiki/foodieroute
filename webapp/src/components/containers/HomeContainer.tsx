@@ -1,4 +1,4 @@
-import HomeView from "../views/HomeView";
+import HomeView from "../views/Homeview";
 import { useEffect, useState } from "react";
 //import { useDispatch, useSelector } from "react-redux";
 // import { useDispatch } from "react-redux";
