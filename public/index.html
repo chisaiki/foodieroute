@@ -1,24 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Maps Testing</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Search for Food Along a Route with Encoded Polyline</title>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBz6xP8Y0nDiMK_KVpAQnvjYv7SQxepoug&libraries=places,geometry&callback=initMap"
+        async defer></script>
+    <style>
+        #map {
+            height: 100%;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+    </style>
 </head>
 
 <body>
-    <nav>
-        <input type="start" type="'text" placeholder="Enter starting point">
-        <input type="dest" type="'text" placeholder="Enter destination">
-    </nav>
+    <div id="map"></div>
 
-    <div id="container">
-        <div id="map"></div>
-    </div>
+    <script src="script.js">
 
-    <script src="script.js"></script>
+    </script>
 </body>
 
 </html>
