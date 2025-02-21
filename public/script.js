@@ -1,8 +1,24 @@
+// Fetch API key from the correct server when using Live Server
+fetch('http://localhost:8000/api-key')
+    .then(response => response.json())
+    .then(data => {
+        if (!data.apiKey) throw new Error("API Key not received");
+
+        // Dynamically add Google Maps script with the fetched API key
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${data.apiKey}&libraries=places&callback=initMap`;
+        script.async = true;
+        document.body.appendChild(script);
+    })
+    .catch(error => console.error("Error fetching API key:", error));
+
+
 let map;
 let directionsService;
 let directionsRenderer;
 
 function initMap() {
+
     const ORIGIN = { lat: 40.7648, lng: -73.9654 }; // Hunter College
     const DESTINATION = { lat: 40.7505, lng: -73.9934 }; // Penn Station
     const SEARCH_QUERY = "Pizza";
@@ -17,6 +33,39 @@ function initMap() {
     directionsRenderer = new google.maps.DirectionsRenderer({
         map: map,
     });
+
+    // Initialize autocomplete for both input fields
+    const autocompleteStart = new google.maps.places.Autocomplete(
+        document.getElementById('start')
+    );
+    const autocompleteEnd = new google.maps.places.Autocomplete(
+        document.getElementById('end')
+    );
+
+    // Trigger route calculation when a place is selected
+    autocompleteStart.addListener('place_changed', calculateRoute);
+    autocompleteEnd.addListener('place_changed', calculateRoute);
+
+    function calculateRoute() {
+        const start = document.getElementById('start').value;
+        const end = document.getElementById('end').value;
+
+        if (start && end) {
+            const request = {
+                origin: start,
+                destination: end,
+                travelMode: google.maps.TravelMode.DRIVING,
+            };
+
+            directionsService.route(request, (result, status) => {
+                if (status === google.maps.DirectionsStatus.OK) {
+                    directionsRenderer.setDirections(result);
+                } else {
+                    console.error('Directions request failed due to ' + status);
+                }
+            });
+        }
+    }
 
     // Initialize PlacesService
     const service = new google.maps.places.PlacesService(map);
@@ -70,4 +119,5 @@ function initMap() {
             console.error("Error with Directions API:", status);
         }
     });
+
 }
