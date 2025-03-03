@@ -27,7 +27,7 @@ function HomeContainer() {
     //   }, [dispatch, isLoaded]);
           {/* <HomeView dispatch={dispatch} /> */}
     return (
-      <HomeView />
+      <HomeView/>
     );
 
 }
