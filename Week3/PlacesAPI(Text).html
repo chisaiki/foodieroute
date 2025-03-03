@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Places API Test</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=xxxx&libraries=places&callback=initMap" async defer></script>
+    <style>
+      #map {
+        height: 100%;
+      }
+      html, body {
+        height: 100%;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <script>
+      let map;
+
+      function initMap() {
+        // Initial map setup
+        const ORIGIN = { lat: 40.7648, lng: -73.9654 }; // Hunter College
+        const RADIUS = 500; // in meters
+        const SEARCH_QUERY = "Pizza"; // Searching for Pizza places
+
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 14,
+          center: ORIGIN,
+        });
+
+        // Coordinates to perform nearbySearch on
+        const coords = [
+          [40.76507, -73.96520000000001],  // Index 0
+          [40.76205, -73.9633],             // Index 5
+          [40.75864000000001, -73.96579000000001], // Index 10
+          [40.75175, -73.97081],           // Index 15
+          [40.74443, -73.97614],           // Index 20
+          [40.744730000000004, -73.98163000000001], // Index 25
+          [40.749590000000005, -73.99317]  // Index 30
+        ];
+
+        // Initialize PlacesService
+        const service = new google.maps.places.PlacesService(map);
+
+        // Iterate over the coords array and perform nearbySearch for each coordinate
+        for (let j = 0; j < coords.length; j++) {
+          let POINT = { lat: coords[j][0], lng: coords[j][1] };
+          
+          // Add a marker for each point
+          new google.maps.Marker({
+            position: POINT,
+            map: map,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              fillColor: "blue", // Blue color for the marker
+              fillOpacity: 1,
+              strokeColor: "blue",
+              strokeOpacity: 1,
+              strokeWeight: 2,
+              scale: 6,
+            }
+          });
+
+          // Draw a transparent circle with the specified radius around each point
+          new google.maps.Circle({
+            map: map,
+            center: POINT,
+            radius: RADIUS, // Radius in meters
+            fillColor: "#0000FF", // Semi-transparent blue
+            fillOpacity: 0.1,
+            strokeColor: "#0000FF", // Blue circle border
+            strokeOpacity: 0.5,
+            strokeWeight: 1,
+          });
+
+          // Perform nearby search for pizza places around each coordinate
+          service.nearbySearch({
+            location: POINT,
+            radius: RADIUS,
+            keyword: SEARCH_QUERY // Searching for Pizza
+          }, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+              // Loop through the results and create a marker for each pizza place
+              for (let i = 0; i < results.length; i++) {
+                new google.maps.Marker({
+                  position: results[i].geometry.location,
+                  map: map,
+                  title: results[i].name || "Pizza Place"
+                });
+              }
+            } else {
+              console.error('Places service failed with status: ' + status);
+            }
+          });
+          
+        }
+      }
+    </script>
+  </body>
+</html>
