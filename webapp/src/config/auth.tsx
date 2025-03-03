@@ -1,5 +1,7 @@
-import { auth, googleProvider } from "./firebase";
-import { createUserWithEmailAndPassword, signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
+import { auth, googleProvider, db } from "./firebase";
+import { createUserWithEmailAndPassword, signInWithPopup, signOut, 
+        onAuthStateChanged, User } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import { useState, useEffect } from "react";
 
 export const AuthView = () => {
@@ -36,6 +38,36 @@ export const AuthView = () => {
 
     return () => unsubscribe(); // Cleanup function to prevent memory leaks
   }, []);
+
+
+  
+  // This should add user info the our database
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const userRef = doc(db, "users", user.uid); // Reference to the user document
+  
+      try {
+        const docSnap = await getDoc(userRef); // Try fetching the document
+  
+        if (docSnap.exists()) { // User is in DB
+          console.log("User already exists:", docSnap.data());
+        } else {
+          // New User
+          await setDoc(userRef, {
+            uid: user.uid,
+            email: user.email,
+            vegetarian: false, // Default value for new users
+          });
+          console.log("New user added to database");
+        }
+      } catch (error) {
+        console.error("Error checking user in database: ", error);
+      }
+    } else {
+      // User is signed out
+      console.log("User signed out");
+    }
+  });
 
   
   const signInWithGoogle = async () => {
