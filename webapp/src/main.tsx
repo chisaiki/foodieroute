@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx' // We don't need this file
+import { AuthProvider } from "./config/AuthUser"
 
 import {
   createBrowserRouter,
@@ -17,6 +18,9 @@ import ErrorPagee from './components/views/error-page.jsx'; // We will need to c
 
 // Better pages (containers)
 import HomeContainer  from './components/containers/HomeContainer';
+import SettingsContainer from './components/containers/SettingsContainer';
+
+
 
 // Router
 const router = createBrowserRouter([
@@ -28,6 +32,10 @@ const router = createBrowserRouter([
   {
     path: "/banana",
     element: <Bananas />,
+  },
+  {
+    path: "/Settings",
+    element: <SettingsContainer/>
   },
   {
     path: "/og",
@@ -44,7 +52,9 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </StrictMode>
 );
 

@@ -30,9 +30,9 @@ function SingleButton(button : string){
           text : 'Food Route',
           link : '/'
       },
-      'Settings' : { // Settings not made yet
+      'Settings' : { 
           text : 'Settings',
-          link : '/banana'
+          link : '/Settings'
       },
   };
 
