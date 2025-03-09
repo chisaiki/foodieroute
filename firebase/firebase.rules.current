@@ -1,0 +1,21 @@
+rules_version = '2';
+
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow create: if request.auth != null;
+
+      // Only allowing reads for said user
+      allow read : if request.auth != null && request.auth.uid == userId;
+    
+      // Only allowing updates on vegetarian for said user ( can not be removed)
+      allow update: if request.auth != null && request.auth.uid == userId &&
+        request.resource.data.keys().hasOnly(["vegetarian"]) &&
+        request.resource.data.vegetarian is bool;
+    }
+    
+  }
+}
+
+

@@ -8,9 +8,16 @@ function SettingsContainer() {
   
   const { userData } = useAuth();
   console.log("printing frontend user data ",userData); // 
-
-  //let isVegi = userData?.vegetarian ?? false;
   const [isVegi, setIsVegi] = useState<boolean>(userData?.vegetarian ?? false); // Tracking state
+
+  // Update this whenever we add a new user field 
+  useEffect(() => {
+    if (userData){
+      setIsVegi(userData.vegetarian ?? false)
+    }
+  }, [userData])
+
+
 
   const userId = userData?.uid ?? ""; 
 
