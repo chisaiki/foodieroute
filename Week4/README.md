@@ -18,3 +18,9 @@ Output: Nearby Place search on 7 coordinates along the route from Hunter College
 
 
 In this file, the coordinate points are hardcoded (there are 7 predefined coordinates), and the map is centered around Hunter college. One thing to consider is making the coordinates (2D array) an input feature, and finding the optimum center of the map and zoom so that fits the entire route and search area. 
+
+
+Consideration found in Week 5: 
+'food' is a type, so could possibly use that
+https://developers.google.com/maps/documentation/places/web-service/place-types
+
