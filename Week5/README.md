@@ -20,6 +20,7 @@ In this file, the coordinate points are hardcoded (there are 7 predefined coordi
 
 
 Update: This approach will not work
+
 Since text search could be restricted to a rectangle, I thought of making a rectangle along the path line this, and limiting the searches to the rectangle shown below. 
 Refer to this image below as Figure 1:
 ![alt text](image2.png)
