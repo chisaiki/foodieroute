@@ -24,3 +24,5 @@ Consideration found in Week 5:
 'food' is a type, so could possibly use that
 https://developers.google.com/maps/documentation/places/web-service/place-types
 
+Update:
+using 'food' type is not returning anything. 
