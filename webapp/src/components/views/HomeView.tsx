@@ -1,5 +1,5 @@
 import NavigationButtons from "./NavigationButtons";
-import ListView from "./list";
+import ListView from "./List";
 import MapView from "./Map";
 import SearchBoxView from "./SearchBox";
 import "../styles/tailwindStyle.css"

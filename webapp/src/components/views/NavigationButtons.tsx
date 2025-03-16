@@ -3,15 +3,18 @@
 import { Link } from "react-router-dom";
 import "../styles/temp.css"
 // import PropTypes from "prop-types"; // Import PropTypes
+import {AuthView} from "../../config/auth";
 
 export default function NavigationButtons(){
   
   return(
       <div id ="nav-bar " className="temp-nav-bar2">
           {SingleButton("Home")}
-          {SingleButton("Settings")}
+          <div className="flex justify-between items-center gap-8">
+            <div><AuthView/></div>
+            {SingleButton("Settings")}
+          </div>
 
-          
           {/* <SingleButton button="Home"/> */}
           {/* <SingleButton button="Settings"/> */}
           
@@ -27,9 +30,9 @@ function SingleButton(button : string){
           text : 'Food Route',
           link : '/'
       },
-      'Settings' : { // Settings not made yet
+      'Settings' : { 
           text : 'Settings',
-          link : '/banana'
+          link : '/Settings'
       },
   };
 
