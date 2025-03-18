@@ -1,7 +1,8 @@
 
 import "../styles/tailwindStyle.css"
+import MapErrorView from "./MapError";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // I needed chatGPT for this
 declare global {
@@ -12,39 +13,71 @@ declare global {
 declare const google: any;
 
 
-export default function MapView() {
-  const mapRef = useRef<HTMLDivElement | null>(null); // ✅ Create a ref for the map container
+export default function MapView( { mapsapiKey, placesAPIKey }: { mapsapiKey: string, placesAPIKey:string }) {
+  const mapRef = useRef<HTMLDivElement | null>(null); 
+  const [error, setError] = useState<string | null>(null); // State to track API errors
 
   useEffect(() => {
-    // ✅ Load Google Maps script dynamically
+
+    // This shows the google maps api part
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsapiKey}&libraries=places&callback=initMap`;
     script.async = true;
     script.defer = true;
     document.body.appendChild(script);
 
-    // ✅ Define initMap globally (needed for Google callback)
+    // if there is an api change state
+    // script.onerror = () => {
+    //   console.log("IDK IS THIS WORKING?")
+    //   setError("Failed to load Google Maps. Check your API key.");
+    // };
+
+    // Listen for API errors (including `InvalidKeyMapError`)
+    const handleGoogleMapsError = (event: ErrorEvent) => {
+      console.log("Is this even working?")
+      if (event.message.includes("Google Maps JavaScript API error")) {
+        setError("Google Maps API Error: Invalid or unauthorized API key.");
+      }
+    };
+
+    // Attach error listener, maybe we need to add "warning"
+    window.addEventListener("error", handleGoogleMapsError);
+    // Not catching "VM1301 util.js:81 Google Maps JavaScript API warning: InvalidKey"
+
     window.initMap = () => {
-      if (!mapRef.current) return;
+      try {
+        if (!mapRef.current) return;
 
-      // Initial Map Setup
-      const ORIGIN = { lat: 40.7648, lng: -73.9654 }; // Hunter College
+        // Initial Map Setup
+        const ORIGIN = { lat: 40.7648, lng: -73.9654 }; // Hunter College
+        const RADIUS = 400; // in meters
+        const SEARCH_QUERY = "Pizza"; // Searching for Pizza places
+        const MAX_RESULT = 10; //max number of places shown per circle 
+  
+  
+        const map = new google.maps.Map(mapRef.current, {
+          zoom: 14,
+          center: ORIGIN,
+        });
+  
+        
+        // addMarkersAndSearch(map);
+      } catch (error){
+        console.error("Google Maps initialization failed:", error);
 
-      const map = new google.maps.Map(mapRef.current, {
-        zoom: 14,
-        center: ORIGIN,
-      });
+        // The error view for whatever
+        return (<MapErrorView></MapErrorView>)
+      }
 
-      // ✅ Call function to add markers & search
-      addMarkersAndSearch(map);
     };
 
     return () => {
-      document.body.removeChild(script); // ✅ Cleanup script when component unmounts
+      document.body.removeChild(script); 
+      window.removeEventListener("error", handleGoogleMapsError);
     };
-  }, []);
+  }, [mapsapiKey, placesAPIKey]);
 
-  // ✅ Function to add markers and fetch nearby places
+  // Function to add markers and fetch nearby places
   const addMarkersAndSearch = (map: any) => {
     const RADIUS = 400; // in meters
     const coords = [
@@ -59,11 +92,15 @@ export default function MapView() {
 
     const service = new google.maps.places.PlacesService(map);
 
+
+    // for (let j = 0; j < coords.length; j++) {
+    //   let POINT = { lat: coords[j][0], lng: coords[j][1] };
+      
     coords.forEach(([lat, lng]) => {
       const POINT = { lat, lng };
 
-      // ✅ Add a marker for each point
-      new google.maps.Marker({
+        // Add a marker for each point
+        new google.maps.Marker({
         position: POINT,
         map,
         icon: {
@@ -77,14 +114,14 @@ export default function MapView() {
         },
       });
 
-      // ✅ Perform nearby search
+      // Perform nearby search
       fetchNearbyPlaces(POINT, map);
     });
   };
 
-  // ✅ Fetch nearby places using Google Places API
+  // Fetch nearby places using Google Places API
   const fetchNearbyPlaces = (location: { lat: number; lng: number }, map: any) => {
-    const url = `https://places.googleapis.com/v1/places:searchText?key=YOUR_API_KEY`;
+    const url = `https://places.googleapis.com/v1/places:searchText?key=${placesAPIKey}`;
 
     const LATITUDE_DEGREE_METERS = 111320;
     const LONGITUDE_DEGREE_METERS = 111320;
@@ -106,6 +143,34 @@ export default function MapView() {
         },
       },
     };
+
+    // Draw the rectangle on the map
+    //   const rectangle = new google.maps.Rectangle({
+    //     map: map,
+    //     bounds: bounds,
+    //     fillColor: "#0000FF", // Semi-transparent blue
+    //     fillOpacity: 0.1,
+    //     strokeColor: "#0000FF", // Blue rectangle border
+    //     strokeOpacity: 0.5,
+    //     strokeWeight: 1
+    // });
+
+    // const body = {
+    //   "textQuery" : "Pizza",
+    //   "locationRestriction": {
+    //     "rectangle": {
+    //       "low": {
+    //         "latitude": lowLat,
+    //         "longitude": lowLng
+    //     },
+    //     "high": {
+    //         "latitude": highLat,
+    //         "longitude": highLng
+    //     }
+    //     }
+    //   }
+    // };
+
 
     fetch(url, {
       method: "POST",
@@ -132,5 +197,6 @@ export default function MapView() {
       .catch((error) => console.error("Error fetching places:", error));
   };
 
-  return <div ref={mapRef} style={{ width: "100%", height: "100vh" }} />;
+  // return <div></div>
+  return <div ref={mapRef} style={{ width: "100%", height: "100%" }} />;
 }
