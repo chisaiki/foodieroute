@@ -12,8 +12,6 @@ fetch('http://localhost:8000/api-key')
     })
     .catch(error => console.error("Error fetching API key:", error));
 
-
-let map;
 let directionsService;
 let directionsRenderer;
 
@@ -24,17 +22,26 @@ function initMap() {
     const SEARCH_QUERY = "Pizza";
     const RADIUS = 0.01;
 
-    map = new google.maps.Map(document.getElementById("map"), {
+    // This line enables the display of the map
+    let map = new google.maps.Map(document.getElementById("map"), {
         zoom: 14,
         center: ORIGIN,
     });
 
+    //this line displays the route itself. Without this, I will have
+    //the autocomplete but I will not have route or the waypoints
+    //contained within the path
     directionsService = new google.maps.DirectionsService();
+    //this line works with the line above to help carry about the
+    //display
     directionsRenderer = new google.maps.DirectionsRenderer({
         map: map,
     });
 
     // Initialize autocomplete for both input fields
+    // the autocomplete is associated with the starting point
+    // through this line
+    // commenting out either autocomplete breaks the feature itself
     const autocompleteStart = new google.maps.places.Autocomplete(
         document.getElementById('start')
     );
@@ -42,9 +49,11 @@ function initMap() {
         document.getElementById('end')
     );
 
-    // Trigger route calculation when a place is selected
+    // Whenever a destination is changed, this listens for it
+    // and updates the routes accordingly
     autocompleteStart.addListener('place_changed', calculateRoute);
     autocompleteEnd.addListener('place_changed', calculateRoute);
+
 
     function calculateRoute() {
         const start = document.getElementById('start').value;
@@ -70,6 +79,7 @@ function initMap() {
     // Initialize PlacesService
     const service = new google.maps.places.PlacesService(map);
 
+    //commenting this out causes the display of the route to disappear
     const request = {
         origin: ORIGIN,
         destination: DESTINATION,
@@ -121,3 +131,35 @@ function initMap() {
     });
 
 }
+
+function searchNearbyPlaces(map, waypoints) {
+    //the line below utilizes the PlacesService API
+    //such declaration enables me to get the information
+    //from the API Request and assign it to the service
+    //variable
+    const service = new google.maps.PlacesService(map);
+
+    waypoints.forEach((point, index) => {
+        const requestInstance = {
+            location: new google.maps.LatLng(point[0], point[1]),
+            radius: 250,
+            keyword: "pizza" //this is an example place
+        }
+
+        service.nearbySearch(request, (results, status) => {
+            if (status === google.maps.places.PlacesService.OK) {
+                console.log("Place located: ");
+                console.log(place.name);
+                console.log(place.rating);
+                console.log(place.place_id);
+            }
+        })
+
+    }
+    )
+}
+
+console.log("Debug statement");
+searchNearbyPlaces(maps, coords);
+
+// /returned results places API
