@@ -6,7 +6,9 @@
 ## How to launch the web app
 
   cd webapp
+  
   npm install
+  
   npm run dev
 
 # You may need to run 
