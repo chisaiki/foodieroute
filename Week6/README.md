@@ -19,3 +19,5 @@ Given 3 consecutive coordinate points:
 
 The output is as follows, where the coordinates (red dots) in the left have been reduced to the coordinates in the right. 
 ![alt text](image-2.png)
+
+I also translated this process to a javascript function shown in reduce.js
