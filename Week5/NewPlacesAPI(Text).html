@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>Places API Test</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=xxxx&libraries=places&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=APIKEY&libraries=places&callback=initMap" async defer></script>
     <style>
       #map {
         height: 100%;
@@ -74,7 +74,7 @@
 
       // Function to make the API request
       function fetchNearbyPlaces(location) {
-        const url = `https://places.googleapis.com/v1/places:searchText?key=xxxx`;
+        const url = `https://places.googleapis.com/v1/places:searchText?key=APIKEY`;
 
         const LATITUDE_DEGREE_METERS = 111320;  // Meters per degree of latitude
         const LONGITUDE_DEGREE_METERS = 111320;  // Meters per degree of longitude at the equator (adjusts with latitude)
