@@ -1,10 +1,11 @@
 
-import "../styles/tailwindStyle.css"
-import MapErrorView from "./MapError";
-
+// import "../styles/tailwindStyle.css"
+// import MapErrorView from "./MapError";
+import "../styles/tailwindStyle.css";
 import { useEffect, useRef, useState } from "react";
+import { Places } from "../../../types/types";
 
-// I needed chatGPT for this
+// TypeScript setup
 declare global {
   interface Window {
     initMap: () => void;
@@ -12,191 +13,262 @@ declare global {
 }
 declare const google: any;
 
+interface MapViewProps {
+  mapsapiKey: string;
+  placesAPIKey: string;
+  setPlaces: React.Dispatch<React.SetStateAction<Places[]>>;
+  origin: { lat: number; lng: number };
+}
 
-export default function MapView( { mapsapiKey, placesAPIKey }: { mapsapiKey: string, placesAPIKey:string }) {
-  const mapRef = useRef<HTMLDivElement | null>(null); 
-  const [error, setError] = useState<string | null>(null); // State to track API errors
+export default function MapView({ mapsapiKey, placesAPIKey, setPlaces, origin }: MapViewProps) {
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const ORIGIN = { lat: origin.lat, lng: origin.lng };
+  const DESTINATION = { lat: 40.7505, lng: -73.9934 };
+  const TRAVEL_MODE = "DRIVING";
+  const RADIUS = 200;
+  const REDUCTION_CONSTANT = 50;
 
   useEffect(() => {
-
-    // This shows the google maps api part
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsapiKey}&libraries=places&callback=initMap`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsapiKey}&libraries=places,geometry&callback=initMap`;
     script.async = true;
     script.defer = true;
     document.body.appendChild(script);
 
-    // if there is an api change state
-    // script.onerror = () => {
-    //   console.log("IDK IS THIS WORKING?")
-    //   setError("Failed to load Google Maps. Check your API key.");
-    // };
+    window.initMap = () => {
+      if (!mapRef.current) return;
 
-    // Listen for API errors (including `InvalidKeyMapError`)
-    const handleGoogleMapsError = (event: ErrorEvent) => {
-      console.log("Is this even working?")
+      const map = new google.maps.Map(mapRef.current, {
+        center: ORIGIN,
+        zoom: 15,
+      });
+
+      searchRoute(map);
+    };
+
+    window.addEventListener("error", (event) => {
       if (event.message.includes("Google Maps JavaScript API error")) {
         setError("Google Maps API Error: Invalid or unauthorized API key.");
       }
-    };
-
-    // Attach error listener, maybe we need to add "warning"
-    window.addEventListener("error", handleGoogleMapsError);
-    // Not catching "VM1301 util.js:81 Google Maps JavaScript API warning: InvalidKey"
-
-    window.initMap = () => {
-      try {
-        if (!mapRef.current) return;
-
-        // Initial Map Setup
-        const ORIGIN = { lat: 40.7648, lng: -73.9654 }; // Hunter College
-        const RADIUS = 400; // in meters
-        const SEARCH_QUERY = "Pizza"; // Searching for Pizza places
-        const MAX_RESULT = 10; //max number of places shown per circle 
-  
-  
-        const map = new google.maps.Map(mapRef.current, {
-          zoom: 14,
-          center: ORIGIN,
-        });
-  
-        
-        // addMarkersAndSearch(map);
-      } catch (error){
-        console.error("Google Maps initialization failed:", error);
-
-        // The error view for whatever
-        return (<MapErrorView></MapErrorView>)
-      }
-
-    };
+    });
 
     return () => {
-      document.body.removeChild(script); 
-      window.removeEventListener("error", handleGoogleMapsError);
+      document.body.removeChild(script);
     };
-  }, [mapsapiKey, placesAPIKey]);
+  }, [mapsapiKey]);
 
-  // Function to add markers and fetch nearby places
-  const addMarkersAndSearch = (map: any) => {
-    const RADIUS = 400; // in meters
-    const coords = [
-      [40.76507, -73.96520000000001],
-      [40.76205, -73.9633],
-      [40.75864000000001, -73.96579000000001],
-      [40.75175, -73.97081],
-      [40.74443, -73.97614],
-      [40.744730000000004, -73.98163000000001],
-      [40.749590000000005, -73.99317],
-    ];
+  const searchRoute = (map: any) => {
+    const directionsService = new google.maps.DirectionsService();
+    const directionsRenderer = new google.maps.DirectionsRenderer({ map });
 
-    const service = new google.maps.places.PlacesService(map);
+    directionsService.route(
+      {
+        origin: ORIGIN,
+        destination: DESTINATION,
+        travelMode: TRAVEL_MODE,
+      },
+      (response: any, status: any) => {
+        if (status === google.maps.DirectionsStatus.OK) {
+          directionsRenderer.setDirections(response);
+          const encodedPolyline = response.routes[0].overview_polyline;
+          const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
 
+          const coords = decodedPath.map((point: any) => [point.lat(), point.lng()]);
+          const reduced = reduceCoordinates(coords);
+          const midpoints = getCircleCenters(reduced);
 
-    // for (let j = 0; j < coords.length; j++) {
-    //   let POINT = { lat: coords[j][0], lng: coords[j][1] };
-      
-    coords.forEach(([lat, lng]) => {
-      const POINT = { lat, lng };
+          midpoints.forEach(([lat, lng]) => {
+            const point = { lat, lng };
 
-        // Add a marker for each point
-        new google.maps.Marker({
-        position: POINT,
-        map,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: "blue",
-          fillOpacity: 1,
-          strokeColor: "blue",
-          strokeOpacity: 1,
-          strokeWeight: 2,
-          scale: 6,
-        },
-      });
+            new google.maps.Marker({
+              position: point,
+              map,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                fillColor: "blue",
+                fillOpacity: 1,
+                strokeColor: "blue",
+                strokeOpacity: 1,
+                strokeWeight: 2,
+                scale: 6,
+              },
+            });
 
-      // Perform nearby search
-      fetchNearbyPlaces(POINT, map);
-    });
+            new google.maps.Circle({
+              map,
+              center: point,
+              radius: RADIUS,
+              fillColor: "#0000FF",
+              fillOpacity: 0.1,
+              strokeColor: "#0000FF",
+              strokeOpacity: 0.5,
+              strokeWeight: 1,
+            });
+
+            fetchNearbyPlaces(point, map);
+          });
+        } else {
+          console.error("Error with Directions API:", status);
+        }
+      }
+    );
   };
 
-  // Fetch nearby places using Google Places API
   const fetchNearbyPlaces = (location: { lat: number; lng: number }, map: any) => {
-    const url = `https://places.googleapis.com/v1/places:searchText?key=${placesAPIKey}`;
-
-    const LATITUDE_DEGREE_METERS = 111320;
-    const LONGITUDE_DEGREE_METERS = 111320;
-
-    const latChange = 400 / LATITUDE_DEGREE_METERS;
-    const lonChange = 400 / (LONGITUDE_DEGREE_METERS * Math.cos(location.lat * (Math.PI / 180)));
-
-    const lowLat = location.lat - latChange;
-    const highLat = location.lat + latChange;
-    const lowLng = location.lng - lonChange;
-    const highLng = location.lng + lonChange;
-
+    const url = `https://places.googleapis.com/v1/places:searchNearby?key=${placesAPIKey}`;
     const body = {
-      textQuery: "Pizza",
       locationRestriction: {
-        rectangle: {
-          low: { latitude: lowLat, longitude: lowLng },
-          high: { latitude: highLat, longitude: highLng },
+        circle: {
+          center: {
+            latitude: location.lat,
+            longitude: location.lng,
+          },
+          radius: RADIUS,
         },
       },
+      includedTypes: ["restaurant"],
     };
-
-    // Draw the rectangle on the map
-    //   const rectangle = new google.maps.Rectangle({
-    //     map: map,
-    //     bounds: bounds,
-    //     fillColor: "#0000FF", // Semi-transparent blue
-    //     fillOpacity: 0.1,
-    //     strokeColor: "#0000FF", // Blue rectangle border
-    //     strokeOpacity: 0.5,
-    //     strokeWeight: 1
-    // });
-
-    // const body = {
-    //   "textQuery" : "Pizza",
-    //   "locationRestriction": {
-    //     "rectangle": {
-    //       "low": {
-    //         "latitude": lowLat,
-    //         "longitude": lowLng
-    //     },
-    //     "high": {
-    //         "latitude": highLat,
-    //         "longitude": highLng
-    //     }
-    //     }
-    //   }
-    // };
-
 
     fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Goog-FieldMask": "places.displayName,places.location",
+        "X-Goog-FieldMask": [
+          "places.displayName",
+          "places.location",
+          "places.photos",
+          "places.rating",
+          "places.priceLevel",
+          "places.formattedAddress",
+          "places.userRatingCount",
+          "places.editorialSummary"
+        ].join(",")
       },
       body: JSON.stringify(body),
     })
-      .then((response) => response.json())
+      .then((res) => res.json())
       .then((data) => {
         if (data?.places) {
+          // console.log(data);
           data.places.forEach((place: any) => {
+            // The Markers
             if (place.location?.latitude && place.location?.longitude) {
               new google.maps.Marker({
-                position: { lat: place.location.latitude, lng: place.location.longitude },
+                position: {
+                  lat: place.location.latitude,
+                  lng: place.location.longitude,
+                },
                 map,
-                title: place.displayName.text,
+                title: place.displayName?.text,
               });
+
+
+            // The data
+            const photoName: string = place.photos?.[0]?.name;
+            const imageUrl = photoName
+              ? `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400&key=${placesAPIKey}`
+              : undefined;
+            
+            const placeObject: Places = {
+              name: place.displayName?.text ?? "Unknown",
+              latitude: place.location.latitude,
+              longitude: place.location.longitude,
+              photoUrl: imageUrl,
+              rating: place.rating,
+              priceLevel: place.priceLevel,
+              address: place.formattedAddress,
+              userRatingsTotal: place.userRatingCount,
+              summary: place.editorialSummary?.text,
+            };
+            
+            // Honestly this was chat gpt
+            setPlaces(prev => {
+              const exists = prev.some(p =>
+                p.name === placeObject.name &&
+                p.latitude === placeObject.latitude &&
+                p.longitude === placeObject.longitude
+              );
+              console.log(prev) // I just have to make sure it works onces
+
+              return exists ? prev : [...prev, placeObject];
+            });
+
             }
           });
         }
       })
-      .catch((error) => console.error("Error fetching places:", error));
+      .catch((err) => console.error("Error fetching places:", err));
   };
 
-  // return <div></div>
+  const metersToDegrees = (meters: number) => meters / 111320;
+
+  const perpendicularDistance = (
+    px: number,
+    py: number,
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number
+  ) =>
+    Math.abs((y2 - y1) * px - (x2 - x1) * py + x2 * y1 - y2 * x1) /
+    Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+
+  const reduceCoordinates = (coords: number[][]): number[][] => {
+    const threshold = metersToDegrees(REDUCTION_CONSTANT);
+    let i = 0;
+    while (i < coords.length - 2) {
+      const [x1, y1] = coords[i];
+      const [x2, y2] = coords[i + 1];
+      const [x3, y3] = coords[i + 2];
+      const dist = perpendicularDistance(x2, y2, x1, y1, x3, y3);
+      if (dist < threshold) {
+        coords.splice(i + 1, 1);
+      } else {
+        i++;
+      }
+    }
+    return coords;
+  };
+
+  const generatePointsAlongLine = (
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    radius: number = RADIUS
+  ) => {
+    const dist = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    const steps = Math.floor(dist / (2 * metersToDegrees(radius)));
+    const dx = (x2 - x1) / dist;
+    const dy = (y2 - y1) / dist;
+
+    const points = [];
+    for (let i = 0; i <= steps; i++) {
+      points.push([x1 + i * 2 * metersToDegrees(radius) * dx, y1 + i * 2 * metersToDegrees(radius) * dy]);
+    }
+    return points;
+  };
+
+  const getCircleCenters = (reducedCoords: number[][]): number[][] => {
+    const centers: number[][] = [];
+    for (let i = 0; i < reducedCoords.length - 1; i++) {
+      const [x1, y1] = reducedCoords[i];
+      const [x2, y2] = reducedCoords[i + 1];
+      centers.push(...generatePointsAlongLine(x1, y1, x2, y2));
+    }
+    return centers;
+  };
+
+  if (error) {
+    return (
+      <div className="text-red-500 text-center p-4 bg-gray-100">
+        <h2>⚠️ Google Maps Error</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
   return <div ref={mapRef} style={{ width: "100%", height: "100%" }} />;
 }

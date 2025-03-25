@@ -4,17 +4,24 @@ import MapErrorView from "./MapError";
 import MapView from "./Map";
 import SearchBoxView from "./SearchBox";
 
+import { Places } from "../../../types/types";
 
 import "../styles/tailwindStyle.css"
 
-export default function HomeView(){
-  const googleMapsAPIKey : string = "placeholder";
-  const googleplacesAPIkey: string = "placeholder";
+type HomeViewProps = {
+  places: Places[];
+  setPlaces: React.Dispatch<React.SetStateAction<Places[]>>
+  origin: { lat: number; lng: number };
+  setOrigin: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
+};
+
+
+export default function HomeView({ places,setPlaces, origin, setOrigin }: HomeViewProps) {
+  const googleMapsAPIKey : string = "";
+  const googleplacesAPIkey: string = "";
 
   //future plans
   //const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-
 
   return(
   <div>
@@ -28,11 +35,11 @@ export default function HomeView(){
           <ListView></ListView>
         </div>
         <div className="mainGridTwo">
-          <MapView mapsapiKey = {googleMapsAPIKey} placesAPIKey={googleplacesAPIkey}  ></MapView>
+          <MapView mapsapiKey = {googleMapsAPIKey} placesAPIKey={googleplacesAPIkey} origin={origin} setPlaces={setPlaces} ></MapView>
           {/* <MapErrorView></MapErrorView> */}
         </div>
         <div className="mainGridThree">
-          <SearchBoxView></SearchBoxView>
+        <SearchBoxView origin={origin} setOrigin={setOrigin} />
         </div>
 
       </div>
