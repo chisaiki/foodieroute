@@ -16,7 +16,7 @@ fetch('/api-key')
     .then(data => {
         API_KEY = data.apiKey;
         const script = document.createElement("script");
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=main`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places,geometry&callback=main`;
         script.async = true;
         script.defer = true;
         document.body.appendChild(script);
@@ -237,29 +237,29 @@ function fetchNearbyPlaces(location) {
 
 //SLIGHT MODIFICATION
 function main() {
-    // Set default values for things other than ORIGIN/DESTINATION
+
     TRAVEL_MODE = google.maps.TravelMode.DRIVING;
     SEARCH_QUERY = "Pizza";
     RADIUS = 200;
 
-    // Set up the map with a default center (neutral starting point)
+    //Hunter College as default map display
     mapOptions = {
-        center: { lat: 40.758, lng: -73.9855 }, // Times Square
+        center: { lat: 40.7687, lng: -73.9649 },
         zoom: 14,
     };
 
-    map = new google.maps.Map(document.querySelector("map"), mapOptions);
+    map = new google.maps.Map(document.getElementById("map"), mapOptions);
 
     // Initialize the autocomplete fields and handle routing once both are selected
-    setupAutocomplete();
+    autocompleteImplementation();
 }
 
 //MY AUTOCOMPLETE INTEGRATION WITH TOMO'S UPDATED MAP CODE
 function autocompleteImplementation() {
 
     // Ensure autocomplete retrieves the starting point and destination as inputs
-    const autocompleteStart = new google.maps.places.Autocomplete(document.querySelector('start'));
-    const autocompleteEnd = new google.maps.places.Autocomplete(document.querySelector('end'));
+    const autocompleteStart = new google.maps.places.Autocomplete(document.querySelector('#start'));
+    const autocompleteEnd = new google.maps.places.Autocomplete(document.querySelector('#end'));
 
     //Since the origin and destination are not known until the user inputs them,
     //we create these boolean values to ensure that they are not yet defined at this point
