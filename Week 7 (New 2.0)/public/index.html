@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps Testing</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="container">
+        <input id = 'searchquery' type="text" placeholder="Enter Search word"/>
+        <input id="start" type="text" placeholder="Enter start location" />
+        <input id="end" type="text" placeholder="Enter end location" />
+        <select id="sort_method" name="sort_method">
+            <option value="Rating" selected>Rating</option>
+            <option value="Price">Price</option>
+            <option value="Count">Count</option>
+          </select>          
+    </div>
+    <div id="map"></div>
+    <div id="places"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
