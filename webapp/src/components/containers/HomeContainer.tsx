@@ -4,19 +4,20 @@ import { Places } from "../../../types/types";
 //import { useDispatch, useSelector } from "react-redux";
 
 
-const googleMapsAPIKey : string = "AIzaSyBz6xP8Y0nDiMK_KVpAQnvjYv7SQxepoug";
+// const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 
-// This is for autocomplete, 
-// It gets attacted as a script then can be called from anywhere from home.
-const script = document.createElement("script");
-script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsAPIKey}&libraries=places`;
-script.async = true;
-script.defer = true;
-document.body.appendChild(script);
+// // This is for autocomplete, 
+// // It gets attacted as a script then can be called from anywhere from home.
+// const script = document.createElement("script");
+// script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsAPIKey}&libraries=places`;
+// script.async = true;
+// script.defer = true;
+// document.body.appendChild(script);
 
 
 function HomeContainer() {
+  const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   // const googleplacesAPIkey: string = "";
     // const [isLoaded, setIsLoaded] = useState(false);

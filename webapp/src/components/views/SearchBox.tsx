@@ -9,7 +9,7 @@ type SearchBoxViewProps = {
   triggerSearch: () => void;
 };
 
-const googleMapsAPIKey : string = "AIzaSyBz6xP8Y0nDiMK_KVpAQnvjYv7SQxepoug";
+const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 
 // This is for autocomplete, 
