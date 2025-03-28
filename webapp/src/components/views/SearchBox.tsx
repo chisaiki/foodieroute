@@ -1,50 +1,116 @@
-
-import "../styles/tailwindStyle.css"
+import { useEffect, useRef } from "react";
+import "../styles/tailwindStyle.css";
 
 type SearchBoxViewProps = {
-  origin: { lat: number; lng: number };
   setOrigin: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
+  setDest: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
+  searchQuery: string;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  triggerSearch: () => void;
 };
 
-export default function SearchBoxView({ origin, setOrigin }: SearchBoxViewProps) {
+const googleMapsAPIKey : string = "AIzaSyBz6xP8Y0nDiMK_KVpAQnvjYv7SQxepoug";
 
-  // Error handling
-  if (!origin) return <div>Loading origin...</div>;
 
-  const handleOriginChange = (coord: "lat" | "lng", value: number) => {
-    setOrigin((prev) => ({ ...prev, [coord]: value }));
-  };
+// This is for autocomplete, 
+// It gets attacted as a script then can be called from anywhere from home.
+const script = document.createElement("script");
+script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsAPIKey}&libraries=places`;
+script.async = true;
+script.defer = true;
+document.body.appendChild(script);
+
+
+
+declare global {
+  interface Window {
+    initMap: () => void;
+  }
+}
+
+declare const google: any;
+
+export default function SearchBoxView({
+  // origin, 
+  setOrigin,
+  // dest, 
+  setDest,
+  searchQuery, 
+  setSearchQuery,
+  triggerSearch
+}: SearchBoxViewProps) {
+  const originRef = useRef<HTMLInputElement | null>(null);
+  const destRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!window.google) return;
+
+    const originAutocomplete = new google.maps.places.Autocomplete(originRef.current!, {
+      types: ["geocode"],
+    });
+
+    const destAutocomplete = new google.maps.places.Autocomplete(destRef.current!, {
+      types: ["geocode"],
+    });
+
+    originAutocomplete.addListener("place_changed", () => {
+      const place = originAutocomplete.getPlace();
+      if (place.geometry) {
+        setOrigin({
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        });
+      }
+    });
+
+    destAutocomplete.addListener("place_changed", () => {
+      const place = destAutocomplete.getPlace();
+      if (place.geometry) {
+        setDest({
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        });
+      }
+    });
+  }, []);
 
   return (
-    <div>
-      <div>Search Settings here...</div>
-      <p>Origin:</p>
-      <br/>
-      {/* <p>Lat: {origin.lat}</p>
-      <p>Lng: {origin.lng}</p> */}
+    <div className="p-2 space-y-3">
       <div>
-      <div>Lat</div>
-      <input
-        style={{ backgroundColor: 'lightgreen' }}
-        type="number"
-        value={origin.lat}
-        onChange={(e) => handleOriginChange("lat", parseFloat(e.target.value))}
-      />
-      </div>
-      <div>
-        <div>long</div>
+        <label>Origin:</label>
         <input
-        style={{ backgroundColor: 'lightgreen' }}
-        type="number"
-        value={origin.lng}
-        onChange={(e) => handleOriginChange("lng", parseFloat(e.target.value))}
-      />
+          ref={originRef}
+          type="text"
+          placeholder="Enter starting location"
+          className="border p-1 w-full"
+        />
       </div>
 
+      <div>
+        <label>Destination:</label>
+        <input
+          ref={destRef}
+          type="text"
+          placeholder="Enter destination"
+          className="border p-1 w-full"
+        />
+      </div>
 
+      <div>
+        <label>Search Query (e.g. Pizza):</label>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="border p-1 w-full"
+        />
+      </div>
 
-
-      <button> "Search here (not active yet)" </button>
+      <button
+      className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+      onClick={triggerSearch}>
+      Search
+    </button>
     </div>
   );
 }
