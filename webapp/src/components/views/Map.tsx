@@ -46,7 +46,7 @@
           zoom: 15,
         });
 
-        // searchRoute(map);
+        searchRoute(map);
       };
 
       window.addEventListener("error", (event) => {
@@ -108,7 +108,7 @@
                 strokeWeight: 1,
               });
 
-              fetchNearbyPlaces(point, map);
+              //fetchNearbyPlaces(point, map);
             });
           } else {
             console.error("Error with Directions API:", status);

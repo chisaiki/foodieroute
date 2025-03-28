@@ -2,7 +2,7 @@ import NavigationButtons from "./NavigationButtons";
 import ListView from "./List";
 import MapErrorView from "./MapError";
 import MapView from "./Map";
-import SearchBoxView from "./SearchBox";
+import SearchBoxView from "./SearchBoxView";
 
 import { Places } from "../../../types/types";
 
