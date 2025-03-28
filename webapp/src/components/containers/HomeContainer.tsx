@@ -40,8 +40,9 @@ function HomeContainer() {
   };
 
   ///
-  /// THE MAP LOGIC START 
+  /// THE GOOGLE MAP LOGIC START 
   ///
+
   const [error, setError] = useState<string | null>(null);
 
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -51,14 +52,17 @@ function HomeContainer() {
   const RADIUS = 200;
   const REDUCTION_CONSTANT = 50;
 
-
+  const originRef = useRef<HTMLInputElement>(null);
+  const destRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsAPIKey}&libraries=places,geometry&callback=initMap`;
-    script.async = true;
+    // script.async = true;
     script.defer = true;
     document.body.appendChild(script);
+
+
 
     window.initMap = () => {
       if (!mapRef.current) return;
@@ -69,6 +73,10 @@ function HomeContainer() {
       });
 
       searchRoute(map);
+    };
+
+    script.onload = () => {
+      initializeAutocomplete();
     };
 
     window.addEventListener("error", (event) => {
@@ -130,7 +138,7 @@ function HomeContainer() {
               strokeWeight: 1,
             });
 
-            //fetchNearbyPlaces(point, map);
+            fetchNearbyPlaces(point, map);
           });
         } else {
           console.error("Error with Directions API:", status);
@@ -140,7 +148,7 @@ function HomeContainer() {
   };
 
   const fetchNearbyPlaces = (location: { lat: number; lng: number }, map: any) => {
-    const url = `https://places.googleapis.com/v1/places:searchNearby?key=${placesAPIKey}`;
+    const url = `https://places.googleapis.com/v1/places:searchNearby?key=${googleMapsAPIKey}`;
     const body = {
       locationRestriction: {
         circle: {
@@ -191,7 +199,7 @@ function HomeContainer() {
             // The data
             const photoName: string = place.photos?.[0]?.name;
             const imageUrl = photoName
-              ? `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400&key=${placesAPIKey}`
+              ? `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400&key=${googleMapsAPIKey}`
               : undefined;
             
             const placeObject: Places = {
@@ -285,7 +293,36 @@ function HomeContainer() {
     };
 
 
-  // const [places, setPlaces] = useState<Places[]>([]);
+    const initializeAutocomplete = () => {
+      if (!originRef.current || !destRef.current || !window.google) return;
+  
+      const originAutocomplete = new window.google.maps.places.Autocomplete(originRef.current);
+      const destAutocomplete = new window.google.maps.places.Autocomplete(destRef.current);
+  
+      originAutocomplete.addListener("place_changed", () => {
+        const place = originAutocomplete.getPlace();
+        if (place.geometry) {
+          setOrigin({
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          });
+        }
+      });
+  
+      destAutocomplete.addListener("place_changed", () => {
+        const place = destAutocomplete.getPlace();
+        if (place.geometry) {
+          setDest({
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          });
+        }
+      });
+    };
+
+  ///
+  /// THE GOOGLE MAP LOGIC ENDS 
+  ///
 
   return (
     // <LoadScript googleMapsApiKey={googleMapsAPIKey} libraries={['places', 'geometry']}>
@@ -305,6 +342,9 @@ function HomeContainer() {
         triggerSearch={triggerSearch}
         
         mapRef = {mapRef}
+
+        originRef={originRef}
+        destRef={destRef}
         />
         
       );

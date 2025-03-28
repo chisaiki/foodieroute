@@ -7,7 +7,7 @@
 
 
   interface MapViewProps {
-    mapRef: React.RefObject<HTMLDivElement>;
+    mapRef: React.RefObject<HTMLDivElement | null>;
   }
 
   export default function MapView({mapRef }: MapViewProps) {

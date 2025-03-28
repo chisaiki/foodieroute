@@ -27,8 +27,10 @@ type HomeViewProps = {
   setSearchRequested: React.Dispatch<React.SetStateAction<boolean>>;
   triggerSearch: () => void;
 
+  mapRef: React.RefObject<HTMLDivElement | null>;
 
-  mapRef: React.RefObject<HTMLDivElement>;
+  originRef: React.RefObject<HTMLInputElement| null>;
+  destRef: React.RefObject<HTMLInputElement| null>;
 };
 
 export default function HomeView({ 
@@ -43,7 +45,9 @@ export default function HomeView({
   setSearchRequested,
   triggerSearch,
 
-  mapRef
+  mapRef,
+  originRef,
+  destRef,
 
 }: HomeViewProps) {
 
@@ -84,6 +88,8 @@ export default function HomeView({
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           triggerSearch={triggerSearch}
+          originRef={originRef}
+          destRef={destRef}
         />
         </div>
 
