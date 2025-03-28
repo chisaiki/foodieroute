@@ -138,7 +138,7 @@ function HomeContainer() {
               strokeWeight: 1,
             });
 
-            fetchNearbyPlaces(point, map);
+            //fetchNearbyPlaces(point, map);
           });
         } else {
           console.error("Error with Directions API:", status);
