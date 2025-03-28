@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './App.jsx' // We don't need this file
+// import App from './App.jsx' // We don't need this file
 import { AuthProvider } from "./config/AuthUser"
 
 import {
@@ -37,10 +37,10 @@ const router = createBrowserRouter([
     path: "/Settings",
     element: <SettingsContainer/>
   },
-  {
-    path: "/og",
-    element: <App />,
-  },
+  // {
+  //   path: "/og",
+  //   element: <App />,
+  // },
 ]);
 
 // I need this for the JS -> TS convertion 

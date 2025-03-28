@@ -23,7 +23,7 @@
 
   export default function MapView({ mapsapiKey, placesAPIKey, setPlaces, origin }: MapViewProps) {
     const mapRef = useRef<HTMLDivElement | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    // const [error, setError] = useState<string | null>(null);
 
     const ORIGIN = { lat: origin.lat, lng: origin.lng };
     const DESTINATION = { lat: 40.7505, lng: -73.9934 };
@@ -31,34 +31,34 @@
     const RADIUS = 200;
     const REDUCTION_CONSTANT = 50;
 
-    useEffect(() => {
-      const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsapiKey}&libraries=places,geometry&callback=initMap`;
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
+    // useEffect(() => {
+    //   const script = document.createElement("script");
+    //   script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsapiKey}&libraries=places,geometry&callback=initMap`;
+    //   script.async = true;
+    //   script.defer = true;
+    //   document.body.appendChild(script);
 
-      window.initMap = () => {
-        if (!mapRef.current) return;
+    //   window.initMap = () => {
+    //     if (!mapRef.current) return;
 
-        const map = new google.maps.Map(mapRef.current, {
-          center: ORIGIN,
-          zoom: 15,
-        });
+    //     const map = new google.maps.Map(mapRef.current, {
+    //       center: ORIGIN,
+    //       zoom: 15,
+    //     });
 
-        searchRoute(map);
-      };
+    //     searchRoute(map);
+    //   };
 
-      window.addEventListener("error", (event) => {
-        if (event.message.includes("Google Maps JavaScript API error")) {
-          setError("Google Maps API Error: Invalid or unauthorized API key.");
-        }
-      });
+    //   window.addEventListener("error", (event) => {
+    //     if (event.message.includes("Google Maps JavaScript API error")) {
+    //       setError("Google Maps API Error: Invalid or unauthorized API key.");
+    //     }
+    //   });
 
-      return () => {
-        document.body.removeChild(script);
-      };
-    }, [mapsapiKey]);
+    //   return () => {
+    //     document.body.removeChild(script);
+    //   };
+    // }, [mapsapiKey]);
 
     const searchRoute = (map: any) => {
       const directionsService = new google.maps.DirectionsService();
@@ -115,6 +115,7 @@
           }
         }
       );
+      //document.body.removeChild(script);
     };
 
     const fetchNearbyPlaces = (location: { lat: number; lng: number }, map: any) => {
@@ -262,14 +263,14 @@
       return centers;
     };
 
-    if (error) {
-      return (
-        <div className="text-red-500 text-center p-4 bg-gray-100">
-          <h2>⚠️ Google Maps Error</h2>
-          <p>{error}</p>
-        </div>
-      );
-    }
+    // if (error) {
+    //   return (
+    //     <div className="text-red-500 text-center p-4 bg-gray-100">
+    //       <h2>⚠️ Google Maps Error</h2>
+    //       <p>{error}</p>
+    //     </div>
+    //   );
+    // }
 
     return <div ref={mapRef} style={{ width: "100%", height: "100%" }} />;
   }

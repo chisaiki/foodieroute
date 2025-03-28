@@ -1,7 +1,9 @@
 import HomeView from "../views/HomeView";
 import { useEffect, useState } from "react";
 import { Places } from "../../../types/types";
-//import { useDispatch, useSelector } from "react-redux";
+import { LoadScript } from '@react-google-maps/api';
+
+
 
 
 // const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -45,23 +47,23 @@ function HomeContainer() {
   // const [places, setPlaces] = useState<Places[]>([]);
 
   return (
-  <HomeView
-    places={places}
-    setPlaces={setPlaces}
-    origin={origin}
-    setOrigin={setOrigin}
-    dest={dest}
-    setDest={setDest}
-    searchQuery={searchQuery}
-    setSearchQuery={setSearchQuery}
-
-    apiGMapsKey={googleMapsAPIKey}
-    apiGPlaceskey={googleMapsAPIKey}
-
-    searchRequested={searchRequested}
-    setSearchRequested={setSearchRequested}
-    triggerSearch={triggerSearch}
-  />
+    <LoadScript googleMapsApiKey={googleMapsAPIKey} libraries={['places', 'geometry']}>
+      <HomeView
+        places={places}
+        setPlaces={setPlaces}
+        origin={origin}
+        setOrigin={setOrigin}
+        dest={dest}
+        setDest={setDest}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        apiGMapsKey={googleMapsAPIKey}
+        apiGPlaceskey={googleMapsAPIKey}
+        searchRequested={searchRequested}
+        setSearchRequested={setSearchRequested}
+        triggerSearch={triggerSearch}
+      />
+    </LoadScript>
   );
 
 }

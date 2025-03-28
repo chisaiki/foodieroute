@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../styles/tailwindStyle.css";
 
 type SearchBoxViewProps = {
@@ -11,51 +11,60 @@ type SearchBoxViewProps = {
 
 const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-
-// This is for autocomplete, 
-// It gets attacted as a script then can be called from anywhere from home.
-const script = document.createElement("script");
-script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsAPIKey}&libraries=places`;
-script.async = true;
-script.defer = true;
-document.body.appendChild(script);
-
-
-
 declare global {
   interface Window {
-    initMap: () => void;
+    google: any;
   }
 }
 
-declare const google: any;
-
 export default function SearchBoxView({
-  // origin, 
   setOrigin,
-  // dest, 
   setDest,
-  searchQuery, 
+  searchQuery,
   setSearchQuery,
-  triggerSearch
+  triggerSearch,
 }: SearchBoxViewProps) {
   const originRef = useRef<HTMLInputElement | null>(null);
   const destRef = useRef<HTMLInputElement | null>(null);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
 
   useEffect(() => {
-    if (!window.google) return;
+    if (window.google && window.google.maps?.places) {
+      initializeAutocomplete();
+      setScriptLoaded(true);
+      return;
+    }
 
-    const originAutocomplete = new google.maps.places.Autocomplete(originRef.current!, {
-      types: ["geocode"],
-    });
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsAPIKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
 
-    const destAutocomplete = new google.maps.places.Autocomplete(destRef.current!, {
-      types: ["geocode"],
-    });
+    script.onload = () => {
+      setScriptLoaded(true);
+      initializeAutocomplete();
+    };
+
+    script.onerror = () => {
+      console.error("Failed to load Google Maps script.");
+    };
+
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const initializeAutocomplete = () => {
+    if (!originRef.current || !destRef.current || !window.google) return;
+
+    const originAutocomplete = new window.google.maps.places.Autocomplete(originRef.current);
+    const destAutocomplete = new window.google.maps.places.Autocomplete(destRef.current);
 
     originAutocomplete.addListener("place_changed", () => {
       const place = originAutocomplete.getPlace();
-      if (place.geometry) {
+      if (place && place.geometry) {
         setOrigin({
           lat: place.geometry.location.lat(),
           lng: place.geometry.location.lng(),
@@ -65,14 +74,14 @@ export default function SearchBoxView({
 
     destAutocomplete.addListener("place_changed", () => {
       const place = destAutocomplete.getPlace();
-      if (place.geometry) {
+      if (place && place.geometry) {
         setDest({
           lat: place.geometry.location.lat(),
           lng: place.geometry.location.lng(),
         });
       }
     });
-  }, []);
+  };
 
   return (
     <div className="p-2 space-y-3">
@@ -107,10 +116,12 @@ export default function SearchBoxView({
       </div>
 
       <button
-      className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
-      onClick={triggerSearch}>
-      Search
-    </button>
+        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+        onClick={triggerSearch}
+        disabled={!scriptLoaded}
+      >
+        Search
+      </button>
     </div>
   );
 }
