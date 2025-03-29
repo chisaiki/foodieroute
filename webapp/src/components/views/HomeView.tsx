@@ -1,7 +1,7 @@
 import NavigationButtons from "./NavigationButtons";
 import ListView from "./List";
 import MapErrorView from "./MapError";
-import MapView from "./Map";
+import MapView from "./MapView";
 import SearchBoxView from "./SearchBoxView";
 
 import { Places } from "../../../types/types";
@@ -26,6 +26,11 @@ type HomeViewProps = {
   searchRequested: boolean;
   setSearchRequested: React.Dispatch<React.SetStateAction<boolean>>;
   triggerSearch: () => void;
+
+  mapRef: React.RefObject<HTMLDivElement | null>;
+
+  originRef: React.RefObject<HTMLInputElement| null>;
+  destRef: React.RefObject<HTMLInputElement| null>;
 };
 
 export default function HomeView({ 
@@ -38,7 +43,11 @@ export default function HomeView({
 
   searchRequested,
   setSearchRequested,
-  triggerSearch
+  triggerSearch,
+
+  mapRef,
+  originRef,
+  destRef,
 
 }: HomeViewProps) {
 
@@ -57,7 +66,7 @@ export default function HomeView({
           <ListView></ListView>
         </div>
         <div className="mainGridTwo">
-          <MapView mapsapiKey = {apiGMapsKey} placesAPIKey={apiGPlaceskey} origin={origin} setPlaces={setPlaces} ></MapView>
+          <MapView mapRef={mapRef} ></MapView>
 
           {/* <MapView
             mapsapiKey={apiGMapsKey}
@@ -79,6 +88,8 @@ export default function HomeView({
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           triggerSearch={triggerSearch}
+          originRef={originRef}
+          destRef={destRef}
         />
         </div>
 

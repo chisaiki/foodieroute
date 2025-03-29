@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../styles/tailwindStyle.css";
 
 type SearchBoxViewProps = {
@@ -7,72 +7,30 @@ type SearchBoxViewProps = {
   searchQuery: string;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   triggerSearch: () => void;
+  originRef: React.RefObject<HTMLInputElement | null >;
+  destRef: React.RefObject<HTMLInputElement | null>;
 };
 
 const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-
-// This is for autocomplete, 
-// It gets attacted as a script then can be called from anywhere from home.
-const script = document.createElement("script");
-script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsAPIKey}&libraries=places`;
-script.async = true;
-script.defer = true;
-document.body.appendChild(script);
-
-
-
 declare global {
   interface Window {
-    initMap: () => void;
+    google: any;
   }
 }
 
-declare const google: any;
-
 export default function SearchBoxView({
-  // origin, 
   setOrigin,
-  // dest, 
   setDest,
-  searchQuery, 
+  searchQuery,
   setSearchQuery,
-  triggerSearch
+  triggerSearch,
+  originRef,
+  destRef,
 }: SearchBoxViewProps) {
-  const originRef = useRef<HTMLInputElement | null>(null);
-  const destRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    if (!window.google) return;
-
-    const originAutocomplete = new google.maps.places.Autocomplete(originRef.current!, {
-      types: ["geocode"],
-    });
-
-    const destAutocomplete = new google.maps.places.Autocomplete(destRef.current!, {
-      types: ["geocode"],
-    });
-
-    originAutocomplete.addListener("place_changed", () => {
-      const place = originAutocomplete.getPlace();
-      if (place.geometry) {
-        setOrigin({
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng(),
-        });
-      }
-    });
-
-    destAutocomplete.addListener("place_changed", () => {
-      const place = destAutocomplete.getPlace();
-      if (place.geometry) {
-        setDest({
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng(),
-        });
-      }
-    });
-  }, []);
+  // const originRef = useRef<HTMLInputElement | null>(null);
+  // const destRef = useRef<HTMLInputElement | null>(null);
+  // const [scriptLoaded, setScriptLoaded] = useState(false);
 
   return (
     <div className="p-2 space-y-3">
@@ -107,10 +65,12 @@ export default function SearchBoxView({
       </div>
 
       <button
-      className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
-      onClick={triggerSearch}>
-      Search
-    </button>
+        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+        onClick={triggerSearch}
+        disabled={true}
+      >
+        Search
+      </button>
     </div>
   );
 }
