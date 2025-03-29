@@ -23,11 +23,11 @@ function HomeContainer() {
   // New Array of data type here
   const [places, setPlaces] = useState<Places[]>([]);
 
-  const [origin, setOrigin] = useState<{ lat: number; lng: number }>({
+  const [ORIGIN, setOrigin] = useState<{ lat: number; lng: number }>({
     lat: 40.753742,
     lng: -73.983559,
   });
-  const [dest, setDest] = useState<{ lat: number; lng: number }>({
+  const [DESTINATION, setDest] = useState<{ lat: number; lng: number }>({
     lat: 40.7505,
     lng: -73.9934,
   });
@@ -39,6 +39,7 @@ function HomeContainer() {
     setSearchRequested(true);
   };
 
+
   ///
   /// THE GOOGLE MAP LOGIC START 
   ///
@@ -46,14 +47,14 @@ function HomeContainer() {
   const [error, setError] = useState<string | null>(null);
 
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const ORIGIN = { lat: origin.lat, lng: origin.lng };
-  const DESTINATION = { lat: 40.7505, lng: -73.9934 };
+  // const ORIGIN = { lat: origin.lat, lng: origin.lng }; // Use react's useState 
+  // const DESTINATION = { lat: 40.7505, lng: -73.9934 }; // Use react's useState 
   const TRAVEL_MODE = "DRIVING";
   const RADIUS = 200;
   const REDUCTION_CONSTANT = 50;
 
-  const originRef = useRef<HTMLInputElement>(null);
-  const destRef = useRef<HTMLInputElement>(null);
+  const originRef = useRef<HTMLInputElement>(null); // Autocomplete listener
+  const destRef = useRef<HTMLInputElement>(null); // Autocomplete listener
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -61,8 +62,6 @@ function HomeContainer() {
     // script.async = true;
     script.defer = true;
     document.body.appendChild(script);
-
-
 
     window.initMap = () => {
       if (!mapRef.current) return;
@@ -89,6 +88,8 @@ function HomeContainer() {
       document.body.removeChild(script);
     };
   }, [googleMapsAPIKey]);
+
+
 
   const searchRoute = (map: any) => {
     const directionsService = new google.maps.DirectionsService();
@@ -329,9 +330,9 @@ function HomeContainer() {
       <HomeView
         places={places}
         setPlaces={setPlaces}
-        origin={origin}
+        origin={ORIGIN}
         setOrigin={setOrigin}
-        dest={dest}
+        dest={DESTINATION}
         setDest={setDest}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
