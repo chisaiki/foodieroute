@@ -12,9 +12,9 @@ type HomeViewProps = {
   places: Places[];
   setPlaces: React.Dispatch<React.SetStateAction<Places[]>>;
   origin: { lat: number; lng: number };
-  setOrigin: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
+  // setOrigin: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
   dest: { lat: number; lng: number };
-  setDest: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
+  // setDest: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
   searchQuery: string;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   
@@ -35,8 +35,8 @@ type HomeViewProps = {
 
 export default function HomeView({ 
   places, setPlaces, 
-  origin, setOrigin, 
-  dest, setDest,
+  origin, //setOrigin, 
+  dest, //setDest,
   searchQuery, setSearchQuery,
   apiGMapsKey, 
   apiGPlaceskey,
@@ -83,8 +83,8 @@ export default function HomeView({
         </div>
         <div className="mainGridThree">
         <SearchBoxView
-          setOrigin={setOrigin}
-          setDest={setDest}
+          // setOrigin={setOrigin}
+          // setDest={setDest}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           triggerSearch={triggerSearch}
