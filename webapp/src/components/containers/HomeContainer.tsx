@@ -35,9 +35,7 @@ function HomeContainer() {
   const [searchQuery, setSearchQuery] = useState<string>("Pizza");
 
   const [searchRequested, setSearchRequested] = useState(false);
-  const triggerSearch = () => {
-    setSearchRequested(true);
-  };
+
 
 
   ///
@@ -46,9 +44,16 @@ function HomeContainer() {
 
   const [error, setError] = useState<string | null>(null);
 
+  // Map related vars
   const mapRef = useRef<HTMLDivElement | null>(null);
-  // const ORIGIN = { lat: origin.lat, lng: origin.lng }; // Use react's useState 
-  // const DESTINATION = { lat: 40.7505, lng: -73.9934 }; // Use react's useState 
+  const mapInstance = useRef<any>(null); 
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const circlesRef = useRef<google.maps.Circle[]>([]);
+
+  const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
+  const startMarkerRef = useRef<google.maps.Marker | null>(null);
+  const endMarkerRef = useRef<google.maps.Marker | null>(null);
+
   const TRAVEL_MODE = "DRIVING";
   const RADIUS = 200;
   const REDUCTION_CONSTANT = 50;
@@ -70,8 +75,8 @@ function HomeContainer() {
         center: ORIGIN,
         zoom: 15,
       });
-
-      searchRoute(map);
+      mapInstance.current = map; 
+      //searchRoute(map);
     };
 
     script.onload = () => {
@@ -84,16 +89,17 @@ function HomeContainer() {
       }
     });
 
-    return () => {
-      document.body.removeChild(script);
-    };
+    // return () => {
+    //   document.body.removeChild(script);
+    // };
   }, [googleMapsAPIKey]);
 
-
-
+  
   const searchRoute = (map: any) => {
+    console.log("searchRoute running")
     const directionsService = new google.maps.DirectionsService();
     const directionsRenderer = new google.maps.DirectionsRenderer({ map });
+    directionsRendererRef.current = directionsRenderer;
 
     directionsService.route(
       {
@@ -114,7 +120,7 @@ function HomeContainer() {
           midpoints.forEach(([lat, lng]) => {
             const point = { lat, lng };
 
-            new google.maps.Marker({
+            const marker = new google.maps.Marker({
               position: point,
               map,
               icon: {
@@ -127,8 +133,10 @@ function HomeContainer() {
                 scale: 6,
               },
             });
+            // Adding mark to our data so we can remove it
+            markersRef.current.push(marker);
 
-            new google.maps.Circle({
+            const circle = new google.maps.Circle({
               map,
               center: point,
               radius: RADIUS,
@@ -138,6 +146,9 @@ function HomeContainer() {
               strokeOpacity: 0.5,
               strokeWeight: 1,
             });
+            // Adding mark to our data so we can clear it later
+
+            circlesRef.current.push(circle); 
 
             //fetchNearbyPlaces(point, map);
           });
@@ -147,6 +158,7 @@ function HomeContainer() {
       }
     );
   };
+
 
   const fetchNearbyPlaces = (location: { lat: number; lng: number }, map: any) => {
     const url = `https://places.googleapis.com/v1/places:searchNearby?key=${googleMapsAPIKey}`;
@@ -321,6 +333,39 @@ function HomeContainer() {
       });
     };
 
+
+  const triggerSearch = () => {
+    console.log("Triggered Search");
+    // Clear circle and markers
+    markersRef.current.forEach((marker) => marker.setMap(null));
+    markersRef.current = [];
+    circlesRef.current.forEach((circle) => circle.setMap(null));
+    circlesRef.current = [];
+
+    // Clear previous route line
+    if (directionsRendererRef.current) {
+      directionsRendererRef.current.setMap(null);
+      directionsRendererRef.current = null;
+    }
+
+    // Clear start/end markers
+    if (startMarkerRef.current) {
+      startMarkerRef.current.setMap(null);
+      startMarkerRef.current = null;
+    }
+    if (endMarkerRef.current) {
+      endMarkerRef.current.setMap(null);
+      endMarkerRef.current = null;
+    }
+
+
+    if (mapInstance.current) {
+      searchRoute(mapInstance.current);
+    } else {
+      console.warn("Map not ready yet");
+    }
+  };
+
   ///
   /// THE GOOGLE MAP LOGIC ENDS 
   ///
@@ -330,10 +375,10 @@ function HomeContainer() {
       <HomeView
         places={places}
         setPlaces={setPlaces}
+
         origin={ORIGIN}
-        setOrigin={setOrigin}
         dest={DESTINATION}
-        setDest={setDest}
+
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         apiGMapsKey={googleMapsAPIKey}

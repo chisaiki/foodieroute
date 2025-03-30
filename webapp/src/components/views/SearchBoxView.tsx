@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import "../styles/tailwindStyle.css";
 
 type SearchBoxViewProps = {
-  setOrigin: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
-  setDest: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
+  // setOrigin: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
+  // setDest: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
   searchQuery: string;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   triggerSearch: () => void;
@@ -20,8 +20,8 @@ declare global {
 }
 
 export default function SearchBoxView({
-  setOrigin,
-  setDest,
+  // setOrigin,
+  // setDest,
   searchQuery,
   setSearchQuery,
   triggerSearch,
@@ -67,7 +67,7 @@ export default function SearchBoxView({
       <button
         className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
         onClick={triggerSearch}
-        disabled={true}
+        // disabled={true}
       >
         Search
       </button>
