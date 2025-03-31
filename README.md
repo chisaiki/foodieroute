@@ -11,13 +11,13 @@
   
   npm run dev
 
-# You may need to run 
-npm install react-router-dom
-npm install firebase
+# First time launch steps, you may need to run 
 
-npm install tailwindcss @tailwindcss/vite
-npm install @react-google-maps/api
+  npm install react-router-dom
+  npm install firebase
+  npm install tailwindcss @tailwindcss/vite
+  npm install @react-google-maps/api
 
-# If your node doesn't work
+# 
 
 
