@@ -1,27 +1,41 @@
-/* Basic Reset */
+/* Stylistic Choices */
 html,
 body {
-    margin: 0;
-    padding: 0;
     font-family: Arial, Helvetica, sans-serif;
-    background-color: lightblue;
+    background-color: #fafafa;
 }
 
-/* Container for map and inputs */
+/* This section styles the container that holds the map and its associated input elements*/
 #container {
-    padding-left: 2%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    /* Ensures each time is separated by 10px of space */
+    margin: 0 auto;
+    width: 80%;
+    max-width: 800px;
+    padding: 20px;
 }
 
-
-/* Input fields */
+/* This section ensures input fields themselves are styled */
 input {
-    width: 80%;
-    max-width: 500px;
     padding: 10px;
-    margin: 10px;
     font-size: 16px;
     border: 1.5px solid #ccc;
     border-radius: 4px;
+    margin: 0;
+}
+
+/* This section styles our selecting button and search button*/
+#sort_method,
+button {
+    padding: 10px;
+    font-size: 16px;
+    border: 1.5px solid #ccc;
+    border-radius: 4px;
+    margin: 0;
 }
 
 /* Map container */
@@ -29,15 +43,6 @@ input {
     height: 80vh;
     width: 80vw;
     background-color: gainsboro;
-}
-
-/* Style for the top inputs */
-#start,
-#end {
-    margin-top: 10px;
-}
-
-/* Add some spacing between inputs */
-#start {
-    margin-bottom: 10px;
+    margin: 20px auto;
+    /* This ensures that the map can be horizontally centered ith 20px of space on the top and bottom */
 }
