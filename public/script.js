@@ -129,16 +129,21 @@ async function search_route() {
 
 // Function to remove duplicates based on the `displayName.text`
 function removeDuplicates(places_array) {
-    // Use a Set to track unique displayName.text values
+    // Use a Set to track unique dsisplayName.text values
     const uniquePlaces = [];
-    const seenNames = new Set();
+    //data structure set for unique elements
+    const seenKeys = new Set();
+
+    //pushes everything into a set using their name
 
     places_array.forEach((place) => {
+        //Let us utilize the key value pair relationship seen in sets
+        //A given place has a unique key based on their name and coordinates
+        const key = `${place.displayName.text}-${place.location.latitude}-${place.location.longitude}`;
         // Check if the place name has been seen before
-        if (!seenNames.has(place.displayName.text)) {
-            // If not, add to the unique places array and mark it as seen
+        if (!seenKeys.has(key)) {
             uniquePlaces.push(place);
-            seenNames.add(place.displayName.text);
+            seenKeys.add(key);
         }
     });
 
