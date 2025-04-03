@@ -173,9 +173,9 @@ function HomeContainer() {
               // Bootleg decoder
               const decodedPlaces: Place[] = decodePlaces(finalPlaces);
               setPlaces(decodedPlaces);
-              console.log(finalPlaces)
-              console.log(decodedPlaces)
-              console.log(places)
+              // console.log(finalPlaces)
+              // console.log(decodedPlaces)
+              // console.log(places)
             });
             
           } else {
@@ -306,7 +306,7 @@ function HomeContainer() {
     });
   
     const body = {
-        "textQuery": 'pizza', //"searchQuery"
+        "textQuery": searchQuery,
         "locationRestriction": {
             "rectangle": {
                 "low": { "latitude": lowLat, "longitude": lowLng },
