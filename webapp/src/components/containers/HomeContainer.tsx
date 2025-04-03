@@ -20,8 +20,25 @@ function HomeContainer() {
   // const googleplacesAPIkey: string = "";
     // const [isLoaded, setIsLoaded] = useState(false);
 
+    let SORT_METHOD = "Rating";
+    type PriceLevel = "PRICE_LEVEL_FREE" | "PRICE_LEVEL_INEXPENSIVE" | "PRICE_LEVEL_MODERATE" | "PRICE_LEVEL_EXPENSIVE" | "PRICE_LEVEL_VERY_EXPENSIVE" | "PRICE_LEVEL_UNSPECIFIED";
+    interface Place {
+        displayName?: { text: string };
+        location?: { latitude: number; longitude: number };
+        photos?: { name: string }[];
+        rating?: number;
+        priceLevel: PriceLevel;
+        formattedAddress?: string;
+        userRatingCount?: number;
+        editorialSummary?: { text: string };
+    }
+    
+    interface PlacesResponse {
+        places: Place[];
+    }
   // New Array of data type here
-  const [places, setPlaces] = useState<Places[]>([]);
+  // const [places, setPlaces] = useState<Places[]>([]);
+  const [places, setPlaces] = useState<Place[]>([]);
 
   const [ORIGIN, setOrigin] = useState<{ lat: number; lng: number }>({
     lat: 40.753742,
@@ -94,24 +111,29 @@ function HomeContainer() {
     // };
   }, [googleMapsAPIKey]);
 
+  // we should move the decoders off to a seperate file
+  function decodePlaces(apiResponse: any[]): Place[] {
+    return apiResponse.map((item) => {
+      const location = item.location || item.geometry?.location;
+  
+      return {
+        displayName: item.displayName ?? { text: item.name ?? "Unknown" },
+        location: location
+          ? {
+              latitude: location.latitude ?? location.lat ?? 0,
+              longitude: location.longitude ?? location.lng ?? 0,
+            }
+          : undefined,
+        photos: [], //no photos for now//item.photos ?? [],
+        rating: item.rating ?? undefined,
+        priceLevel: item.priceLevel ?? "PRICE_LEVEL_UNSPECIFIED",
+        formattedAddress: item.formattedAddress ?? item.address ?? "Unknown",
+        userRatingCount: item.userRatingCount ?? item.user_ratings_total ?? 0,
+        editorialSummary: item.editorialSummary ?? undefined,
+      };
+    });
+  }
 
-  let SORT_METHOD = "Rating";
-  type PriceLevel = "PRICE_LEVEL_FREE" | "PRICE_LEVEL_INEXPENSIVE" | "PRICE_LEVEL_MODERATE" | "PRICE_LEVEL_EXPENSIVE" | "PRICE_LEVEL_VERY_EXPENSIVE" | "PRICE_LEVEL_UNSPECIFIED";
-  interface Place {
-      displayName?: { text: string };
-      location?: { latitude: number; longitude: number };
-      photos?: { name: string }[];
-      rating?: number;
-      priceLevel: PriceLevel;
-      formattedAddress?: string;
-      userRatingCount?: number;
-      editorialSummary?: { text: string };
-  }
-  
-  interface PlacesResponse {
-      places: Place[];
-  }
-  
     const searchRoute = (map: any) => {
       const directionsService = new google.maps.DirectionsService();
       const directionsRenderer = new google.maps.DirectionsRenderer({ map });
@@ -147,8 +169,13 @@ function HomeContainer() {
             });
             getSortedAndUniquePlaces(locations, map).then((finalPlaces) => {
               const myFinalPlaces = finalPlaces;
-              console.log(myFinalPlaces);
-              
+
+              // Bootleg decoder
+              const decodedPlaces: Place[] = decodePlaces(finalPlaces);
+              setPlaces(decodedPlaces);
+              console.log(finalPlaces)
+              console.log(decodedPlaces)
+              console.log(places)
             });
             
           } else {
