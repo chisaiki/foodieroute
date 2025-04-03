@@ -409,6 +409,9 @@ let autocompleteListeningProcess = () => {
             console.log("Origin does not exist");
             return;
         }
+
+       //ON SUCCESS GO HERE AND STORE IT
+
         ORIGIN = {
             lat: place.geometry.location.lat(),
             lng: place.geometry.location.lng()
@@ -430,11 +433,24 @@ let autocompleteListeningProcess = () => {
             console.log("Destination does not exist");
             return;
         }
-        DESTINATION = {
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng()
-        };
-        ISDESTINATIONDEFINED = true;
+
+        if (getCurrentLocation == true)
+        {
+            function success(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            }
+        }
+        
+        else
+        {
+            DESTINATION = {
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng()
+            };
+            ISDESTINATIONDEFINED = true;
+        }
+        
 
         if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
             search_route();
@@ -512,3 +528,52 @@ searchButton.addEventListener('click', () => {
         search_route();
     }
 });
+
+let getLocation = true;
+
+function currentLocation()
+{
+  let text = "Use Current Location?";
+
+  if (confirm(text)) 
+  {
+    findCurrent();
+  } 
+  
+  else 
+  {
+    getLocation = false;
+  }
+
+}
+
+function findCurrent()
+{
+        alert("IN FUNCTION");
+
+        function error() 
+        {
+          alert("Unable to retrieve your location");
+        }
+      
+        if (!navigator.geolocation) 
+        {
+          alert("Geolocation is not supported by your browser");
+        } 
+        
+        else 
+        {
+          navigator.geolocation.getCurrentPosition(success, error);
+        }
+        
+}
+
+if (getLocation == true)
+{
+    const startInput = document.querySelector('#start');
+    startInput.addEventListener("click", currentLocation);
+}
+
+//make alert 
+//allow for current location
+//make a bool to only allow current location
