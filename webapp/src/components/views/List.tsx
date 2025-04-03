@@ -52,7 +52,11 @@ export default function ListView({
   <div>
 
     <div> Restaurant List Here</div>
-    {renderPlaces()}
+    
+    {/* THIS DIV BELOW */}
+    <div className="overflow-auto max-h-[calc(100vh-90px)]"> 
+      {renderPlaces()}
+      </div>
 
   </div>
 

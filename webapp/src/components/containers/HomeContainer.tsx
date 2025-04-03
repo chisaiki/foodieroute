@@ -1,7 +1,8 @@
 import HomeView from "../views/HomeView";
 import { useEffect, useRef, useState } from "react";
-import { Places } from "../../../types/types";
-import { LoadScript } from '@react-google-maps/api';
+import { Place, PriceLevel } from "../../../types/types";
+import {decodePlaces} from "../../../types/decoders";
+// import { LoadScript } from '@react-google-maps/api';
 
 
   // TypeScript setup
@@ -17,22 +18,11 @@ import { LoadScript } from '@react-google-maps/api';
 function HomeContainer() {
   const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-  // const googleplacesAPIkey: string = "";
-    // const [isLoaded, setIsLoaded] = useState(false);
+
+  // const [isLoaded, setIsLoaded] = useState(false);
 
     let SORT_METHOD = "Rating";
-    type PriceLevel = "PRICE_LEVEL_FREE" | "PRICE_LEVEL_INEXPENSIVE" | "PRICE_LEVEL_MODERATE" | "PRICE_LEVEL_EXPENSIVE" | "PRICE_LEVEL_VERY_EXPENSIVE" | "PRICE_LEVEL_UNSPECIFIED";
-    interface Place {
-        displayName?: { text: string };
-        location?: { latitude: number; longitude: number };
-        photos?: { name: string }[];
-        rating?: number;
-        priceLevel: PriceLevel;
-        formattedAddress?: string;
-        userRatingCount?: number;
-        editorialSummary?: { text: string };
-    }
-    
+
     interface PlacesResponse {
         places: Place[];
     }
@@ -111,28 +101,6 @@ function HomeContainer() {
     // };
   }, [googleMapsAPIKey]);
 
-  // we should move the decoders off to a seperate file
-  function decodePlaces(apiResponse: any[]): Place[] {
-    return apiResponse.map((item) => {
-      const location = item.location || item.geometry?.location;
-  
-      return {
-        displayName: item.displayName ?? { text: item.name ?? "Unknown" },
-        location: location
-          ? {
-              latitude: location.latitude ?? location.lat ?? 0,
-              longitude: location.longitude ?? location.lng ?? 0,
-            }
-          : undefined,
-        photos: [], //no photos for now//item.photos ?? [],
-        rating: item.rating ?? undefined,
-        priceLevel: item.priceLevel ?? "PRICE_LEVEL_UNSPECIFIED",
-        formattedAddress: item.formattedAddress ?? item.address ?? "Unknown",
-        userRatingCount: item.userRatingCount ?? item.user_ratings_total ?? 0,
-        editorialSummary: item.editorialSummary ?? undefined,
-      };
-    });
-  }
 
     const searchRoute = (map: any) => {
       const directionsService = new google.maps.DirectionsService();
@@ -266,6 +234,7 @@ function HomeContainer() {
     
       for (const location of locations) {
         const places = await fetchNearbyPlaces(location, map);
+
         allPlaces.push(...places);  // Spread the places array into allPlaces
       }
     
