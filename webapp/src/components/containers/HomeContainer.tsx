@@ -94,157 +94,229 @@ function HomeContainer() {
     // };
   }, [googleMapsAPIKey]);
 
+
+  let SORT_METHOD = "Rating";
+  type PriceLevel = "PRICE_LEVEL_FREE" | "PRICE_LEVEL_INEXPENSIVE" | "PRICE_LEVEL_MODERATE" | "PRICE_LEVEL_EXPENSIVE" | "PRICE_LEVEL_VERY_EXPENSIVE" | "PRICE_LEVEL_UNSPECIFIED";
+  interface Place {
+      displayName?: { text: string };
+      location?: { latitude: number; longitude: number };
+      photos?: { name: string }[];
+      rating?: number;
+      priceLevel: PriceLevel;
+      formattedAddress?: string;
+      userRatingCount?: number;
+      editorialSummary?: { text: string };
+  }
   
-  const searchRoute = (map: any) => {
-    console.log("searchRoute running")
-    const directionsService = new google.maps.DirectionsService();
-    const directionsRenderer = new google.maps.DirectionsRenderer({ map });
-    directionsRendererRef.current = directionsRenderer;
-
-    directionsService.route(
-      {
-        origin: ORIGIN,
-        destination: DESTINATION,
-        travelMode: TRAVEL_MODE,
-      },
-      (response: any, status: any) => {
-        if (status === google.maps.DirectionsStatus.OK) {
-          directionsRenderer.setDirections(response);
-          const encodedPolyline = response.routes[0].overview_polyline;
-          const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
-
-          const coords = decodedPath.map((point: any) => [point.lat(), point.lng()]);
-          const reduced = reduceCoordinates(coords);
-          const midpoints = getCircleCenters(reduced);
-
-          midpoints.forEach(([lat, lng]) => {
-            const point = { lat, lng };
-
-            const marker = new google.maps.Marker({
-              position: point,
-              map,
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                fillColor: "blue",
-                fillOpacity: 1,
-                strokeColor: "blue",
-                strokeOpacity: 1,
-                strokeWeight: 2,
-                scale: 6,
-              },
-            });
-            // Adding mark to our data so we can remove it
-            markersRef.current.push(marker);
-
-            const circle = new google.maps.Circle({
-              map,
-              center: point,
-              radius: RADIUS,
-              fillColor: "#0000FF",
-              fillOpacity: 0.1,
-              strokeColor: "#0000FF",
-              strokeOpacity: 0.5,
-              strokeWeight: 1,
-            });
-            // Adding mark to our data so we can clear it later
-
-            circlesRef.current.push(circle); 
-
-            //fetchNearbyPlaces(point, map);
-          });
-        } else {
-          console.error("Error with Directions API:", status);
-        }
-      }
-    );
-  };
-
-
-  const fetchNearbyPlaces = (location: { lat: number; lng: number }, map: any) => {
-    const url = `https://places.googleapis.com/v1/places:searchNearby?key=${googleMapsAPIKey}`;
-    const body = {
-      locationRestriction: {
-        circle: {
-          center: {
-            latitude: location.lat,
-            longitude: location.lng,
-          },
-          radius: RADIUS,
+  interface PlacesResponse {
+      places: Place[];
+  }
+  
+    const searchRoute = (map: any) => {
+      const directionsService = new google.maps.DirectionsService();
+      const directionsRenderer = new google.maps.DirectionsRenderer({ map });
+  
+      directionsService.route(
+        {
+          origin: ORIGIN,
+          destination: DESTINATION,
+          travelMode: TRAVEL_MODE,
         },
-      },
-      includedTypes: ["restaurant"],
-    };
-
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-FieldMask": [
-          "places.displayName",
-          "places.location",
-          "places.photos",
-          "places.rating",
-          "places.priceLevel",
-          "places.formattedAddress",
-          "places.userRatingCount",
-          "places.editorialSummary"
-        ].join(",")
-      },
-      body: JSON.stringify(body),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.places) {
-          // console.log(data);
-          data.places.forEach((place: any) => {
-            // The Markers
-            if (place.location?.latitude && place.location?.longitude) {
+        (response: any, status: any) => {
+          if (status === google.maps.DirectionsStatus.OK) {
+            directionsRenderer.setDirections(response);
+            const encodedPolyline = response.routes[0].overview_polyline;
+            const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
+  
+            const coords = decodedPath.map((point: any) => [point.lat(), point.lng()]);
+            const reduced = reduceCoordinates(coords);
+            const midpoints = getCircleCenters(reduced);
+            const locations: { lat: number; lng: number }[] = [];
+            midpoints.forEach(([lat, lng]) => {
+              const point = { lat, lng };
+              locations.push(point); 
               new google.maps.Marker({
-                position: {
-                  lat: place.location.latitude,
-                  lng: place.location.longitude,
-                },
+                position: point,
                 map,
-                title: place.displayName?.text,
+                icon: {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  fillColor: "blue",
+                  scale: 6,
+                },
               });
-
-
-            // The data
-            const photoName: string = place.photos?.[0]?.name;
-            const imageUrl = photoName
-              ? `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400&key=${googleMapsAPIKey}`
-              : undefined;
-            
-            const placeObject: Places = {
-              name: place.displayName?.text ?? "Unknown",
-              latitude: place.location.latitude,
-              longitude: place.location.longitude,
-              photoUrl: imageUrl,
-              rating: place.rating,
-              priceLevel: place.priceLevel,
-              address: place.formattedAddress,
-              userRatingsTotal: place.userRatingCount,
-              summary: place.editorialSummary?.text,
-            };
-            
-            // Honestly this was chat gpt
-            setPlaces(prev => {
-              const exists = prev.some(p =>
-                p.name === placeObject.name &&
-                p.latitude === placeObject.latitude &&
-                p.longitude === placeObject.longitude
-              );
-              console.log(prev) // I just have to make sure it works onces
-
-              return exists ? prev : [...prev, placeObject];
             });
-
-            }
-          });
+            getSortedAndUniquePlaces(locations, map).then((finalPlaces) => {
+              const myFinalPlaces = finalPlaces;
+              console.log(myFinalPlaces);
+              
+            });
+            
+          } else {
+            console.error("Error with Directions API:", status);
+          }        
         }
-      })
-      .catch((err) => console.error("Error fetching places:", err));
-  };
+      );
+    };
+  
+    async function getSortedAndUniquePlaces(locations: { lat: number; lng: number }[], map: google.maps.Map): Promise<any[]> {
+      try {
+        const allPlaces = await fetchAllNearbyPlaces(locations, map); // Fetch places from all locations
+        const uniquePlaces = removeDuplicates(allPlaces); // Remove duplicates
+        const sortedPlaces = sortPlaces(uniquePlaces); // Sort the places
+        //console.log(sortedPlaces); // Optionally log the final result
+        return sortedPlaces; // Return the final sorted and unique places
+      } catch (error) {
+        console.error("Error fetching or processing places:", error);
+        return []; // Return an empty array if there's an error
+      }
+    }
+  
+    // if there are multiple mcdonalds, will only show one
+    function removeDuplicates(places_array: any[]): any[] {
+      // Use a Set to track unique displayName.text values
+      const uniquePlaces: { lat: number; lng: number }[] = [];
+      const seenNames = new Set();
+  
+      places_array.forEach((place) => {
+          // Check if the place name has been seen before
+          if (!seenNames.has(place.displayName.text)) {
+              // If not, add to the unique places array and mark it as seen
+              uniquePlaces.push(place);
+              seenNames.add(place.displayName.text);
+          }
+      });
+      return uniquePlaces;
+  }
+  
+  function sortPlacesByRating(places_array: any[]): any[] {
+    return places_array.sort((a, b) => b.rating - a.rating);
+  }
+  
+  // Function to sort places by price level
+  function sortPlacesByPriceLevel(places_array: Place[]): Place[] {
+    //https://developers.google.com/maps/documentation/places/web-service/reference/rest/v1/places
+    const priceLevelOrder: Record<PriceLevel, number> = {
+        "PRICE_LEVEL_FREE": 1,
+        "PRICE_LEVEL_INEXPENSIVE": 2,
+        "PRICE_LEVEL_MODERATE": 3,
+        "PRICE_LEVEL_EXPENSIVE": 4,
+        "PRICE_LEVEL_VERY_EXPENSIVE": 5,
+        "PRICE_LEVEL_UNSPECIFIED": 6,
+    };
+  
+    return places_array.sort((a, b) => priceLevelOrder[a.priceLevel] - priceLevelOrder[b.priceLevel]);
+  }
+  
+  // Function to sort places by user rating count (descending)
+  function sortPlacesByUserRatingCount(places_array: any[]): any[] {
+    return places_array.sort((a, b) => b.userRatingCount - a.userRatingCount);
+  }
+  
+  function sortPlaces(places_array: any[]): any[] {
+    switch (SORT_METHOD) {
+        case "Price":
+            places_array = sortPlacesByPriceLevel(places_array);
+            break;
+        case "Rating":
+            places_array = sortPlacesByRating(places_array);
+            break;
+        case "Count":
+            places_array = sortPlacesByUserRatingCount(places_array);
+            break;
+        default:
+            console.log("Invalid sort method");
+            break;
+    }
+  
+    console.log("Places have been sorted by SORT_METHOD: " + SORT_METHOD);
+    //console.log(places_array);
+  
+    return places_array;  // Return the sorted places array
+  }
+  
+    async function fetchAllNearbyPlaces(locations: { lat: number; lng: number }[], map: any): Promise<Place[]> {
+      const allPlaces: Place[] = [];
+    
+      for (const location of locations) {
+        const places = await fetchNearbyPlaces(location, map);
+        allPlaces.push(...places);  // Spread the places array into allPlaces
+      }
+    
+      return allPlaces;
+    }
+  
+  
+  async function fetchNearbyPlaces(location: { lat: number; lng: number }, map: any): Promise<Place[]> {
+    let places_return: Place[] = [];
+    const url = `https://places.googleapis.com/v1/places:searchText?key=${googleMapsAPIKey}`;
+  
+    const LATITUDE_DEGREE_METERS = 111320;
+    const LONGITUDE_DEGREE_METERS = 111320;
+  
+    const latChange = RADIUS / LATITUDE_DEGREE_METERS;
+    const lonChange = RADIUS / (LONGITUDE_DEGREE_METERS * Math.cos(location.lat * (Math.PI / 180)));
+  
+    const lowLat = location.lat - latChange;
+    const highLat = location.lat + latChange;
+    const lowLng = location.lng - lonChange;
+    const highLng = location.lng + lonChange;
+  
+    const bounds = {
+        north: highLat,
+        south: lowLat,
+        east: highLng,
+        west: lowLng
+    };
+  
+    const rectangle = new google.maps.Rectangle({
+        map: map,
+        bounds: bounds,
+        fillColor: "#0000FF", // Semi-transparent blue
+        fillOpacity: 0.1,
+        strokeColor: "#0000FF", // Blue rectangle border
+        strokeOpacity: 0.5,
+        strokeWeight: 1
+    });
+  
+    const body = {
+        "textQuery": 'pizza', //"searchQuery"
+        "locationRestriction": {
+            "rectangle": {
+                "low": { "latitude": lowLat, "longitude": lowLng },
+                "high": { "latitude": highLat, "longitude": highLng }
+            }
+        }
+    };
+  
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Goog-FieldMask": [
+                    "places.displayName",
+                    "places.location",
+                    "places.photos",
+                    "places.rating",
+                    "places.priceLevel",
+                    "places.formattedAddress",
+                    "places.userRatingCount",
+                    "places.editorialSummary"
+                ].join(",")
+            },
+            body: JSON.stringify(body)
+        });
+  
+        const data: PlacesResponse = await response.json();
+        places_return = data.places || []; // Ensure places_return is populated with places from the response
+    } catch (error) {
+        console.error('Error during fetch:', error);
+    }
+  
+    return places_return; // Return the places array after the fetch completes
+  }
+  
+
 
   const metersToDegrees = (meters: number) => meters / 111320;
 
