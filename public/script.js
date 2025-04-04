@@ -433,23 +433,14 @@ let autocompleteListeningProcess = () => {
             console.log("Destination does not exist");
             return;
         }
-
-        if (getCurrentLocation == true)
-        {
-            function success(position) {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-            }
-        }
         
-        else
-        {
+       
             DESTINATION = {
                 lat: place.geometry.location.lat(),
                 lng: place.geometry.location.lng()
             };
             ISDESTINATIONDEFINED = true;
-        }
+        
         
 
         if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
@@ -527,6 +518,10 @@ searchButton.addEventListener('click', () => {
     if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
         search_route();
     }
+
+    /*Added an else statement to warn users when search is incomplete*/
+    else
+    alert("Cannot search until all parameters are met.")
 });
 
 let getLocation = true;
