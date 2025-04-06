@@ -46,3 +46,28 @@ button {
     margin: 20px auto;
     /* This ensures that the map can be horizontally centered ith 20px of space on the top and bottom */
 }
+
+/* Display places container */
+#pinkdiv {
+    height: 80vh;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #ffe6f2;
+    /* light pink background */
+}
+
+.place-item {
+    border-bottom: 1px solid #ccc;
+    padding: 10px 0;
+    margin-bottom: 10px;
+}
+
+.place-item h3 {
+    margin: 0 0 5px;
+    font-size: 18px;
+}
+
+.place-item p {
+    margin: 0;
+    font-size: 14px;
+}

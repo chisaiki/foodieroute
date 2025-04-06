@@ -117,7 +117,7 @@ async function search_route() {
                 const newPlaces = await fetchNearbyPlaces(POINT);
                 places_array = places_array.concat(newPlaces);
             }
-            //console.log(places_array);
+            console.log(places_array);
             places_array = removeDuplicates(places_array);
             show_places(places_array);
 
@@ -238,6 +238,9 @@ function show_places(places_array) {
     });
     console.log("Places have been sorted by SORT_METHOD:" + SORT_METHOD)
     console.log(places_array);
+
+    // Update the pinkdiv list with place details
+    displayPlacesList(places_array);
 }
 
 
@@ -512,3 +515,76 @@ searchButton.addEventListener('click', () => {
         search_route();
     }
 });
+
+
+//pink div implementation begins here
+function displayPlacesList(places_array) {
+    const pinkBox = document.querySelector('#pinkdiv');
+    // Clear what was previously stored
+    pinkBox.innerHTML = '';
+
+    //For each place in our places array, we would like to do the following:
+    // 1. Create a dedicated div and place it under a class labled "place-item"
+    // 2. To display its name, get it from place.displayName.text and assign it to the textContent of a new h3 element and append to div
+    // 3. If rating exists, create a new paragraph element, assign its rating to the element's textContent and append to div
+    // 4. 
+    places_array.forEach((place) => {
+        const placeDiv = document.createElement('div');
+        placeDiv.className = 'place-item';
+
+        // Create and append the place name
+        const nameEl = document.createElement('h3');
+        nameEl.textContent = place.displayName.text;
+        placeDiv.appendChild(nameEl);
+
+        // If a rating is available, display it
+        if (place.rating) {
+            const ratingEl = document.createElement('p');
+            ratingEl.textContent = `Rating: ${place.rating}`;
+            placeDiv.appendChild(ratingEl);
+        }
+
+        // If a price level is available, display it (remove the prefix for clarity)
+        if (place.priceLevel) {
+            let tempPriceLevel = place.priceLevel;
+            if (tempPriceLevel.startsWith("PRICE_LEVEL_")) {
+                tempPriceLevel = tempPriceLevel.slice("PRICE_LEVEL_".length);
+            }
+            const priceEl = document.createElement('p');
+            priceEl.textContent = `Price: ${tempPriceLevel}`;
+            placeDiv.appendChild(priceEl);
+        }
+
+        // If an address is available, display it
+        if (place.formattedAddress) {
+            const addressEl = document.createElement('p');
+            addressEl.textContent = `Address: ${place.formattedAddress}`;
+            placeDiv.appendChild(addressEl);
+        }
+
+        pinkBox.appendChild(placeDiv);
+    });
+}
+
+//let pinkBox = document.querySelector('#pinkdiv');
+
+//Idea: pink div will be an empty container initially
+//It will display places from an array
+//This display will contain the information of a given place
+//from this places array, I will add elements to my HTML file accordingly
+
+// const addContainer = (place) => {
+//     const div = document.createElement("div");
+//     div.className = "place";
+//     const name = document.createElement("p");
+//     name.innerText = `${place.displayName.text}`;
+//     const rating = document.createElement("p");
+//     rating.innerText = `${place.rating.value}`;
+
+// }
+
+
+// pinkBox.classList
+// //display place name
+// //below it, show rating, then price range next to it
+// //specify what kind of restaurant it is
