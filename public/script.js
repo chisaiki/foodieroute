@@ -12,6 +12,7 @@ let SORT_METHOD;
 let ISORIGINDEFINED;
 let ISDESTINATIONDEFINED;
 let ISSEARCHDEFINED;
+let  getCurrentLocation = false;
 
 //to keep track of directions, globally
 let CURRENTDIRECTIONSRENDERER = null;
@@ -433,15 +434,14 @@ let autocompleteListeningProcess = () => {
             console.log("Destination does not exist");
             return;
         }
-        
-       
+
             DESTINATION = {
                 lat: place.geometry.location.lat(),
                 lng: place.geometry.location.lng()
             };
+
             ISDESTINATIONDEFINED = true;
-        
-        
+       
 
         if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
             search_route();
@@ -518,57 +518,57 @@ searchButton.addEventListener('click', () => {
     if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
         search_route();
     }
-
-    /*Added an else statement to warn users when search is incomplete*/
-    else
-    alert("Cannot search until all parameters are met.")
 });
 
-let getLocation = true;
 
-function currentLocation()
-{
-  let text = "Use Current Location?";
+/*If user clicks on origin search button, will ask user*/
 
-  if (confirm(text)) 
-  {
-    findCurrent();
-  } 
+/*Event waiting for button click*/
+
+const startInput = document.querySelector('#start');
+startInput.addEventListener("click", () => currentLocation('origin'));
+
+const destinationInput = document.querySelector('#end');
+destinationInput.addEventListener("click", () => currentLocation('destination'));
+
+function currentLocation(type) {
+    let text = "Use Current Location?";
   
-  else 
-  {
-    getLocation = false;
+    if (confirm(text)) {
+      const showError = (error) => {
+        alert("Error getting location: " + error.message);
+      };
+  
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+      const success = (position) => {
+          const locationData = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+          };
+  
+          if (type === 'origin') {
+              ORIGIN = locationData;
+              document.querySelector('#start').value = "Current Location";
+              ISORIGINDEFINED = true;
+          } else if (type === 'destination') {
+          DESTINATION = locationData;
+          document.querySelector('#end').value = "Current Location";
+          ISDESTINATIONDEFINED = true;
+          }
+  
+  
+      };
+  
+      navigator.geolocation.getCurrentPosition(success, showError);
+  
+      getCurrentLocation = true;
+    }
   }
-
-}
-
-function findCurrent()
-{
-        alert("IN FUNCTION");
-
-        function error() 
-        {
-          alert("Unable to retrieve your location");
-        }
-      
-        if (!navigator.geolocation) 
-        {
-          alert("Geolocation is not supported by your browser");
-        } 
-        
-        else 
-        {
-          navigator.geolocation.getCurrentPosition(success, error);
-        }
-        
-}
-
-if (getLocation == true)
-{
-    const startInput = document.querySelector('#start');
-    startInput.addEventListener("click", currentLocation);
-}
-
+  
+///////////////////////////////////
 //make alert 
 //allow for current location
 //make a bool to only allow current location
