@@ -422,6 +422,8 @@ let autocompleteListeningProcess = () => {
         if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
             search_route();
         }
+        else
+        alert("Please complete all fields to search.");
     });
 
     const autocompleteEnd = new google.maps.places.Autocomplete(document.querySelector('#end'));
@@ -446,6 +448,8 @@ let autocompleteListeningProcess = () => {
         if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
             search_route();
         }
+        else
+        alert("Please complete all fields to search.");
     });
 
     const searchQuery = document.querySelector('#searchquery');
@@ -464,6 +468,8 @@ let autocompleteListeningProcess = () => {
             if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
                 search_route();
             }
+            else
+            alert("Please complete all fields to search.");
         }
     });
 
@@ -477,6 +483,8 @@ let autocompleteListeningProcess = () => {
         if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
             search_route();
         }
+        else
+        alert("Please complete all fields to search.");
     })
 }
 
@@ -518,6 +526,8 @@ searchButton.addEventListener('click', () => {
     if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
         search_route();
     }
+    else
+        alert("Please complete all fields to search.");
 });
 
 
@@ -558,8 +568,6 @@ function currentLocation(type) {
           document.querySelector('#end').value = "Current Location";
           ISDESTINATIONDEFINED = true;
           }
-  
-  
       };
   
       navigator.geolocation.getCurrentPosition(success, showError);
@@ -569,6 +577,3 @@ function currentLocation(type) {
   }
   
 ///////////////////////////////////
-//make alert 
-//allow for current location
-//make a bool to only allow current location
