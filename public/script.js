@@ -22,6 +22,8 @@ let MARKERSCONTAINER = [];
 let RECTANGLESCONTAINER = [];
 //to keep track of intermediate waypoints
 let BLUEDOTSCONTAINER = [];
+
+
 // fetch the API key from the server
 fetch('/api-key')
     .then(response => response.json())
@@ -209,13 +211,66 @@ function createMarker(place, map, index) {
         };
     }
 
-    // Create the marker & return the marker
-    return new google.maps.Marker({
+    // Create the marker
+    let marker = new google.maps.Marker({
         position: { lat: place.location.latitude, lng: place.location.longitude },
         map: map,
         icon: markerIcon,
         title: place.displayName.text, // Use place name as the title
     });
+
+    //Must create an info window. In order to do so with javascript, we must
+    //create HTML elements to make the appearance happen
+
+    //We will create a div that will hold a given info window. We will apply styling so
+    //the content appears neatly and does not look stretched out
+    const containerDiv = document.createElement('div');
+
+    // Create an h3 element for the place name
+    //Within our container, our place's title will be displayed first and emphasized
+    //Other elements will follow as needed
+    const titleEl = document.createElement('h3');
+    titleEl.textContent = place.displayName.text;
+    containerDiv.appendChild(titleEl);
+
+    // If a rating is available, display it
+    const ratingEl = document.createElement('p');
+    if (place.rating) {
+        ratingEl.textContent = `Rating: ${place.rating}`;
+    }
+    else {
+        ratingEl.textContent = 'Rating: N/A';
+    }
+    containerDiv.appendChild(ratingEl);
+
+
+    // If a price level is available, display it (remove the prefix for clarity)
+    const priceEl = document.createElement('p');
+    if (place.priceLevel) {
+        let tempPriceLevel = place.priceLevel;
+        if (tempPriceLevel.startsWith("PRICE_LEVEL_")) {
+            tempPriceLevel = tempPriceLevel.slice("PRICE_LEVEL_".length);
+        }
+        priceEl.textContent = `Price: ${tempPriceLevel}`;
+    }
+    else {
+        priceEl.textContent = `Price: N/A`;
+    }
+    containerDiv.appendChild(priceEl);
+
+    // If an address is available, display it
+    const addressEl = document.createElement('p');
+    if (place.formattedAddress) {
+        addressEl.textContent = `Address: ${place.formattedAddress}`;
+    }
+    else {
+        addressEl.textContent = `Address: N/A`;
+    }
+    containerDiv.appendChild(addressEl);
+
+    //Add a listener here for the info window display
+
+    return marker;
 }
 
 function show_places(places_array) {
@@ -528,7 +583,8 @@ function displayPlacesList(places_array) {
     // 1. Create a dedicated div and place it under a class labled "place-item"
     // 2. To display its name, get it from place.displayName.text and assign it to the textContent of a new h3 element and append to div
     // 3. If rating exists, create a new paragraph element, assign its rating to the element's textContent and append to div
-    // 4. 
+    // 4. Same procedure for price and address
+    // 5. Append all information into the placeDiv initially created
     places_array.forEach((place) => {
         const placeDiv = document.createElement('div');
         placeDiv.className = 'place-item';
@@ -539,29 +595,39 @@ function displayPlacesList(places_array) {
         placeDiv.appendChild(nameEl);
 
         // If a rating is available, display it
+        const ratingEl = document.createElement('p');
         if (place.rating) {
-            const ratingEl = document.createElement('p');
             ratingEl.textContent = `Rating: ${place.rating}`;
-            placeDiv.appendChild(ratingEl);
         }
+        else {
+            ratingEl.textContent = 'Rating: N/A';
+        }
+        placeDiv.appendChild(ratingEl);
+
 
         // If a price level is available, display it (remove the prefix for clarity)
+        const priceEl = document.createElement('p');
         if (place.priceLevel) {
             let tempPriceLevel = place.priceLevel;
             if (tempPriceLevel.startsWith("PRICE_LEVEL_")) {
                 tempPriceLevel = tempPriceLevel.slice("PRICE_LEVEL_".length);
             }
-            const priceEl = document.createElement('p');
             priceEl.textContent = `Price: ${tempPriceLevel}`;
-            placeDiv.appendChild(priceEl);
         }
+        else {
+            priceEl.textContent = `Price: N/A`;
+        }
+        placeDiv.appendChild(priceEl);
 
         // If an address is available, display it
+        const addressEl = document.createElement('p');
         if (place.formattedAddress) {
-            const addressEl = document.createElement('p');
             addressEl.textContent = `Address: ${place.formattedAddress}`;
-            placeDiv.appendChild(addressEl);
         }
+        else {
+            addressEl.textContent = `Address: N/A`;
+        }
+        placeDiv.appendChild(addressEl);
 
         pinkBox.appendChild(placeDiv);
     });
