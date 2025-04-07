@@ -22,6 +22,8 @@ let MARKERSCONTAINER = [];
 let RECTANGLESCONTAINER = [];
 //to keep track of intermediate waypoints
 let BLUEDOTSCONTAINER = [];
+//to keep track of the currently info window being displayed
+let CURRENTINFOWINDOW = null;
 
 
 // fetch the API key from the server
@@ -268,7 +270,12 @@ function createMarker(place, map, index) {
     }
     containerDiv.appendChild(addressEl);
 
-    //Add a listener here for the info window display
+
+    //For a given marker, if it is clicked, its associated information will be displayed
+    //on an info window that contains its contents
+    marker.addListener('click', () => {
+        showPlaceInfo(marker, containerDiv);
+    });
 
     return marker;
 }
@@ -686,3 +693,22 @@ function currentLocation(type) {
 //allow for current location
 //make a bool to only allow current location
 //END OF SYEDA'S CODE
+
+//This function will display the contents of a given info window.
+//Such an object will be created based on the contents of the containerDiv
+//and will be applied to its corresponding marker
+function showPlaceInfo(marker, containerDiv) {
+    //If a window currently exists, we must close it
+    //This is to prevent multiple windows from appearing at once with multiple clicks
+    if (CURRENTINFOWINDOW) {
+        CURRENTINFOWINDOW.close();
+    }
+
+    //Instnatiate a new InfoWindow Object with the provided characteristics
+    CURRENTINFOWINDOW = new google.maps.InfoWindow({
+        content: containerDiv,
+    });
+
+    //Finally, our window is ready to be displayed
+    CURRENTINFOWINDOW.open(map, marker);
+}
