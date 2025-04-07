@@ -12,6 +12,7 @@ let SORT_METHOD;
 let ISORIGINDEFINED;
 let ISDESTINATIONDEFINED;
 let ISSEARCHDEFINED;
+let getCurrentLocation = false; //FROM SYEDA'S CODE
 
 //to keep track of directions, globally
 let CURRENTDIRECTIONSRENDERER = null;
@@ -566,25 +567,56 @@ function displayPlacesList(places_array) {
     });
 }
 
-//let pinkBox = document.querySelector('#pinkdiv');
+//THE CODE BELOW IS PULLED FROM SYEDA'S BRANCH. 
+/*If user clicks on origin search button, will ask user*/
 
-//Idea: pink div will be an empty container initially
-//It will display places from an array
-//This display will contain the information of a given place
-//from this places array, I will add elements to my HTML file accordingly
+/*Event waiting for button click*/
 
-// const addContainer = (place) => {
-//     const div = document.createElement("div");
-//     div.className = "place";
-//     const name = document.createElement("p");
-//     name.innerText = `${place.displayName.text}`;
-//     const rating = document.createElement("p");
-//     rating.innerText = `${place.rating.value}`;
+const startInput = document.querySelector('#start');
+startInput.addEventListener("click", () => currentLocation('origin'));
 
-// }
+const destinationInput = document.querySelector('#end');
+destinationInput.addEventListener("click", () => currentLocation('destination'));
+
+function currentLocation(type) {
+    let text = "Use Current Location?";
+
+    if (confirm(text)) {
+        const showError = (error) => {
+            alert("Error getting location: " + error.message);
+        };
+
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser.");
+            return;
+        }
+        const success = (position) => {
+            const locationData = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+
+            if (type === 'origin') {
+                ORIGIN = locationData;
+                document.querySelector('#start').value = "Current Location";
+                ISORIGINDEFINED = true;
+            } else if (type === 'destination') {
+                DESTINATION = locationData;
+                document.querySelector('#end').value = "Current Location";
+                ISDESTINATIONDEFINED = true;
+            }
 
 
-// pinkBox.classList
-// //display place name
-// //below it, show rating, then price range next to it
-// //specify what kind of restaurant it is
+        };
+
+        navigator.geolocation.getCurrentPosition(success, showError);
+
+        getCurrentLocation = true;
+    }
+}
+
+///////////////////////////////////
+//make alert
+//allow for current location
+//make a bool to only allow current location
+//END OF SYEDA'S CODE
