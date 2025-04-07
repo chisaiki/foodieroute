@@ -227,7 +227,7 @@ function createMarker(place, map, index) {
     //We will create a div that will hold a given info window. We will apply styling so
     //the content appears neatly and does not look stretched out
     const containerDiv = document.createElement('div');
-
+    containerDiv.classList.add('infowindow-content'); // The styling that makes the content appear neat
     // Create an h3 element for the place name
     //Within our container, our place's title will be displayed first and emphasized
     //Other elements will follow as needed
@@ -706,7 +706,7 @@ function showPlaceInfo(marker, containerDiv) {
 
     //Instnatiate a new InfoWindow Object with the provided characteristics
     CURRENTINFOWINDOW = new google.maps.InfoWindow({
-        content: containerDiv,
+        content: containerDiv
     });
 
     //Finally, our window is ready to be displayed
