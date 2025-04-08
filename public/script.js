@@ -9,21 +9,21 @@ let API_KEY = '';
 let REDUCTION_CONSTANT = 50;
 let SORT_METHOD;
 //new global variables for search event listener
-let ISORIGINDEFINED;
-let ISDESTINATIONDEFINED;
-let ISSEARCHDEFINED;
-let getCurrentLocation = false; //FROM SYEDA'S CODE
+let IS_ORIGIN_DEFINED;
+let IS_DESTINATION_DEFINED;
+let IS_SEARCH_DEFINED;
+let GET_CURRENT_LOCATION = false; //FROM SYEDA'S CODE
 
 //to keep track of directions, globally
-let CURRENTDIRECTIONSRENDERER = null;
+let CURRENT_DIRECTIONS_RENDERER = null;
 //to keep track of markers shown, globally
-let MARKERSCONTAINER = [];
+let MARKERS_CONTAINER = [];
 //to keep track of rectangles shown, globally
-let RECTANGLESCONTAINER = [];
+let RECTANGLES_CONTAINER = [];
 //to keep track of intermediate waypoints
-let BLUEDOTSCONTAINER = [];
+let BLUE_DOTS_CONTAINER = [];
 //to keep track of the currently info window being displayed
-let CURRENTINFOWINDOW = null;
+let CURRENT_INFO_WINDOW = null;
 
 
 // fetch the API key from the server
@@ -44,19 +44,19 @@ fetch('/api-key')
 
 const clearMap = () => {
     //Check if directions are in place. If so, clear them
-    if (CURRENTDIRECTIONSRENDERER) {
-        CURRENTDIRECTIONSRENDERER.setMap(null);
-        CURRENTDIRECTIONSRENDERER = null;
+    if (CURRENT_DIRECTIONS_RENDERER) {
+        CURRENT_DIRECTIONS_RENDERER.setMap(null);
+        CURRENT_DIRECTIONS_RENDERER = null;
     }
 
     //Clear all containers
-    clearContainerHelper(MARKERSCONTAINER);
-    clearContainerHelper(RECTANGLESCONTAINER);
-    clearContainerHelper(BLUEDOTSCONTAINER);
+    clearContainerHelper(MARKERS_CONTAINER);
+    clearContainerHelper(RECTANGLES_CONTAINER);
+    clearContainerHelper(BLUE_DOTS_CONTAINER);
 }
 
 //helper function that simplifies erasure process
-const clearContainerHelper = (container) => {
+const clearContainerHelper = container => {
     container.forEach((item) => { item.setMap(null) });
     //Make the container empty so that its size is maintainable
     container = [];
@@ -72,7 +72,7 @@ async function search_route() {
     let places_array = [];
     let directionsService = new google.maps.DirectionsService();
     //Since we need directions at times, store this value in global variable so that clearing is functional
-    CURRENTDIRECTIONSRENDERER = new google.maps.DirectionsRenderer({
+    CURRENT_DIRECTIONS_RENDERER = new google.maps.DirectionsRenderer({
         map: map,
     });
 
@@ -85,7 +85,7 @@ async function search_route() {
     directionsService.route(request, async (response, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
             //directionsRender is now a global variable, and contains the current directions
-            CURRENTDIRECTIONSRENDERER.setDirections(response);
+            CURRENT_DIRECTIONS_RENDERER.setDirections(response);
             const encodedPolyline = response.routes[0].overview_polyline;
             const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
 
@@ -116,7 +116,7 @@ async function search_route() {
                         scale: 6,
                     }
                 });
-                BLUEDOTSCONTAINER.push(blueMarker); //Append to global container so that it may removed later if needed.
+                BLUE_DOTS_CONTAINER.push(blueMarker); //Append to global container so that it may removed later if needed.
 
                 // Fetch nearby places and wait for it to finish before continuing
                 const newPlaces = await fetchNearbyPlaces(POINT);
@@ -274,7 +274,7 @@ function createMarker(place, map, index) {
     //For a given marker, if it is clicked, its associated information will be displayed
     //on an info window that contains its contents
     marker.addListener('click', () => {
-        showPlaceInfo(marker, containerDiv);
+        displayMarkerInfo(marker, containerDiv);
     });
 
     return marker;
@@ -297,7 +297,7 @@ function show_places(places_array) {
     }
     places_array.forEach((place, index) => {
         let marker = createMarker(place, map, index); // Create a marker for each place
-        MARKERSCONTAINER.push(marker); //Store each marker in the global array of markers to keep track of them
+        MARKERS_CONTAINER.push(marker); //Store each marker in the global array of markers to keep track of them
     });
     console.log("Places have been sorted by SORT_METHOD:" + SORT_METHOD)
     console.log(places_array);
@@ -423,7 +423,7 @@ async function fetchNearbyPlaces(location) {
     //Append each instance of a rectangle onto our container
     //So that our container globally contains all rectangles
     //So that we can clear when needed
-    RECTANGLESCONTAINER.push(rectangle);
+    RECTANGLES_CONTAINER.push(rectangle);
 
     const body = {
         "textQuery": SEARCH_QUERY,
@@ -479,9 +479,9 @@ let autocompleteListeningProcess = () => {
             lat: place.geometry.location.lat(),
             lng: place.geometry.location.lng()
         };
-        ISORIGINDEFINED = true;
+        IS_ORIGIN_DEFINED = true;
 
-        if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
+        if (IS_ORIGIN_DEFINED && IS_DESTINATION_DEFINED && IS_SEARCH_DEFINED) {
             search_route();
         }
     });
@@ -500,9 +500,9 @@ let autocompleteListeningProcess = () => {
             lat: place.geometry.location.lat(),
             lng: place.geometry.location.lng()
         };
-        ISDESTINATIONDEFINED = true;
+        IS_DESTINATION_DEFINED = true;
 
-        if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
+        if (IS_ORIGIN_DEFINED && IS_DESTINATION_DEFINED && IS_SEARCH_DEFINED) {
             search_route();
         }
     });
@@ -516,11 +516,11 @@ let autocompleteListeningProcess = () => {
         //Update SEARCH_QUERY if Enter was pressed
         if (e.key === 'Enter') {
             SEARCH_QUERY = searchQuery.value;
-            ISSEARCHDEFINED = true;
+            IS_SEARCH_DEFINED = true;
             if (SEARCH_QUERY === "")
-                ISSEARCHDEFINED = false;
+                IS_SEARCH_DEFINED = false;
             // If all fields are valid, trigger search_route()
-            if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
+            if (IS_ORIGIN_DEFINED && IS_DESTINATION_DEFINED && IS_SEARCH_DEFINED) {
                 search_route();
             }
         }
@@ -533,7 +533,7 @@ let autocompleteListeningProcess = () => {
     userSortOption.addEventListener('change', () => {
 
         SORT_METHOD = userSortOption.value;
-        if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
+        if (IS_ORIGIN_DEFINED && IS_DESTINATION_DEFINED && IS_SEARCH_DEFINED) {
             search_route();
         }
     })
@@ -566,22 +566,22 @@ searchButton.addEventListener('click', () => {
     SEARCH_QUERY = searchQueryElement.value;
 
     if (SEARCH_QUERY === "") {
-        ISSEARCHDEFINED = false;
+        IS_SEARCH_DEFINED = false;
         console.log("Enter a value");
         return;
     } else {
-        ISSEARCHDEFINED = true;
+        IS_SEARCH_DEFINED = true;
     }
 
     // search_route is called once all variables are set
-    if (ISORIGINDEFINED && ISDESTINATIONDEFINED && ISSEARCHDEFINED) {
+    if (IS_ORIGIN_DEFINED && IS_DESTINATION_DEFINED && IS_SEARCH_DEFINED) {
         search_route();
     }
 });
 
 
 //pink div implementation begins here
-function displayPlacesList(places_array) {
+const displayPlacesList = places_array => {
     const pinkBox = document.querySelector('#pinkdiv');
     // Clear what was previously stored
     pinkBox.innerHTML = '';
@@ -672,11 +672,11 @@ function currentLocation(type) {
             if (type === 'origin') {
                 ORIGIN = locationData;
                 document.querySelector('#start').value = "Current Location";
-                ISORIGINDEFINED = true;
+                IS_ORIGIN_DEFINED = true;
             } else if (type === 'destination') {
                 DESTINATION = locationData;
                 document.querySelector('#end').value = "Current Location";
-                ISDESTINATIONDEFINED = true;
+                IS_DESTINATION_DEFINED = true;
             }
 
 
@@ -684,7 +684,7 @@ function currentLocation(type) {
 
         navigator.geolocation.getCurrentPosition(success, showError);
 
-        getCurrentLocation = true;
+        GET_CURRENT_LOCATION = true;
     }
 }
 
@@ -697,18 +697,18 @@ function currentLocation(type) {
 //This function will display the contents of a given info window.
 //Such an object will be created based on the contents of the containerDiv
 //and will be applied to its corresponding marker
-function showPlaceInfo(marker, containerDiv) {
+const displayMarkerInfo = (marker, containerDiv) => {
     //If a window currently exists, we must close it
     //This is to prevent multiple windows from appearing at once with multiple clicks
-    if (CURRENTINFOWINDOW) {
-        CURRENTINFOWINDOW.close();
+    if (CURRENT_INFO_WINDOW) {
+        CURRENT_INFO_WINDOW.close();
     }
 
     //Instnatiate a new InfoWindow Object with the provided characteristics
-    CURRENTINFOWINDOW = new google.maps.InfoWindow({
+    CURRENT_INFO_WINDOW = new google.maps.InfoWindow({
         content: containerDiv
     });
 
     //Finally, our window is ready to be displayed
-    CURRENTINFOWINDOW.open(map, marker);
+    CURRENT_INFO_WINDOW.open(map, marker);
 }
