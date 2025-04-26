@@ -2,6 +2,7 @@ import HomeView from "../views/HomeView";
 import { useEffect, useRef, useState } from "react";
 import { Place, PriceLevel } from "../../../types/types";
 import {decodePlaces} from "../../../types/decoders";
+import { useAuth, addSearchToHistory } from '../../config/AuthUser';
 // import { LoadScript } from '@react-google-maps/api';
 
 
@@ -17,6 +18,7 @@ import {decodePlaces} from "../../../types/decoders";
 
 function HomeContainer() {
   const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const { userData } = useAuth();
 
 
   // const [isLoaded, setIsLoaded] = useState(false);
@@ -38,6 +40,10 @@ function HomeContainer() {
     lat: 40.7505,
     lng: -73.9934,
   });
+
+
+  const [origin_string, setOrigin_string] = useState<string>("");
+  const [destination_string, setDestination_string] = useState<string>("");
 
   const [searchQuery, setSearchQuery] = useState<string>("Pizza");
 
@@ -112,7 +118,7 @@ function HomeContainer() {
           destination: DESTINATION,
           travelMode: TRAVEL_MODE,
         },
-        (response: any, status: any) => {
+        async (response: any, status: any) => {
           if (status === google.maps.DirectionsStatus.OK) {
             directionsRenderer.setDirections(response);
             const encodedPolyline = response.routes[0].overview_polyline;
@@ -135,17 +141,31 @@ function HomeContainer() {
                 },
               });
             });
-            getSortedAndUniquePlaces(locations, map).then((finalPlaces) => {
-              const myFinalPlaces = finalPlaces;
 
+            try {
+              const finalPlaces = await getSortedAndUniquePlaces(locations, map);
               // Bootleg decoder
               const decodedPlaces: Place[] = decodePlaces(finalPlaces);
               setPlaces(decodedPlaces);
-              // console.log(finalPlaces)
-              // console.log(decodedPlaces)
-              // console.log(places)
-            });
-            
+
+              // After everything is successful, save the search to history
+              if (userData?.uid) {
+                const success = await addSearchToHistory(
+                  userData.uid,
+                  ORIGIN,
+                  DESTINATION,
+                  origin_string,
+                  destination_string
+                );
+                if (success) {
+                  console.log("Successfully saved search to history");
+                } else {
+                  console.log("Failed to save search to history");
+                }
+              }
+            } catch (error) {
+              console.error("Error processing places or saving history:", error);
+            }
           } else {
             console.error("Error with Directions API:", status);
           }        
@@ -382,28 +402,42 @@ function HomeContainer() {
   
       originAutocomplete.addListener("place_changed", () => {
         const place = originAutocomplete.getPlace();
-        if (place.geometry) {
+        // Add safety checks
+        if (!originRef.current) return;
+        
+        if (place && place.geometry) {
           setOrigin({
             lat: place.geometry.location.lat(),
             lng: place.geometry.location.lng(),
           });
+          // Only try to access value if we're sure the ref exists
+          setOrigin_string(originRef.current.value || "");
         }
       });
   
       destAutocomplete.addListener("place_changed", () => {
         const place = destAutocomplete.getPlace();
-        if (place.geometry) {
+        // Add safety checks
+        if (!destRef.current) return;
+
+        if (place && place.geometry) {
           setDest({
             lat: place.geometry.location.lat(),
             lng: place.geometry.location.lng(),
           });
+          // Only try to access value if we're sure the ref exists
+          setDestination_string(destRef.current.value || "");
         }
       });
+
+
     };
 
 
   const triggerSearch = () => {
     console.log("Triggered Search");
+    console.log("Origin: " + origin_string);
+    console.log("Destination: " + destination_string);
     // Clear circle and markers
     markersRef.current.forEach((marker) => marker.setMap(null));
     markersRef.current = [];
@@ -432,6 +466,8 @@ function HomeContainer() {
     } else {
       console.warn("Map not ready yet");
     }
+
+
   };
 
   ///

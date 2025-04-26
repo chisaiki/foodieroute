@@ -12,7 +12,7 @@ export default function NavigationButtons(){
           {SingleButton("Home")}
           <div className="flex justify-between items-center gap-8">
             <div><AuthView/></div>
-            {SingleButton("Settings")}
+            {SingleButton("Settings & Account")}
           </div>
 
           {/* <SingleButton button="Home"/> */}
@@ -30,8 +30,8 @@ function SingleButton(button : string){
           text : 'Food Route',
           link : '/'
       },
-      'Settings' : { 
-          text : 'Settings',
+      'Settings & Account' : { 
+          text : 'Settings & Account',
           link : '/Settings'
       },
   };

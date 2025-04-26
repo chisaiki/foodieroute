@@ -28,9 +28,7 @@ export default function SearchBoxView({
   originRef,
   destRef,
 }: SearchBoxViewProps) {
-  // const originRef = useRef<HTMLInputElement | null>(null);
-  // const destRef = useRef<HTMLInputElement | null>(null);
-  // const [scriptLoaded, setScriptLoaded] = useState(false);
+
 
   return (
     <div className="p-2 space-y-3">
