@@ -35,7 +35,7 @@ function SettingsContainer() {
 
 
     return (
-      <SettingsView veg = {isVegi}  toggleVeg={toggleVegetarian} />
+      <SettingsView veg = {isVegi}  toggleVeg={toggleVegetarian} history={userData?.history ?? []} />
     );
 
 }
