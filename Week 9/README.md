@@ -35,3 +35,5 @@ headers: {
 ```
 
 The function I changed here was in HomeContainer.tsx, inside the search_route() function
+
+Right now this will display the photo inside the marker upon click, but the photos could also be passed to the pink div
