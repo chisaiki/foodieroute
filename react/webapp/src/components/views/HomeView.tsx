@@ -4,13 +4,13 @@ import MapErrorView from "./MapError";
 import MapView from "./MapView";
 import SearchBoxView from "./SearchBoxView";
 
-import { Places } from "../../../types/types";
+import { Place } from "../../../types/types";
 
 import "../styles/tailwindStyle.css"
 
 type HomeViewProps = {
-  places: Places[];
-  setPlaces: React.Dispatch<React.SetStateAction<Places[]>>;
+  places: Place[];
+  setPlaces: React.Dispatch<React.SetStateAction<Place[]>>;
   origin: { lat: number; lng: number };
   // setOrigin: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
   dest: { lat: number; lng: number };
@@ -63,7 +63,7 @@ export default function HomeView({
 
       <div className="maingrid"> 
         <div className="mainGridOne">
-          <ListView></ListView>
+          <ListView places={places}></ListView>
         </div>
         <div className="mainGridTwo">
           <MapView mapRef={mapRef} ></MapView>

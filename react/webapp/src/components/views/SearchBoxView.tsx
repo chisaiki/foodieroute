@@ -11,7 +11,7 @@ type SearchBoxViewProps = {
   destRef: React.RefObject<HTMLInputElement | null>;
 };
 
-const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+// const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 declare global {
   interface Window {
@@ -28,9 +28,7 @@ export default function SearchBoxView({
   originRef,
   destRef,
 }: SearchBoxViewProps) {
-  // const originRef = useRef<HTMLInputElement | null>(null);
-  // const destRef = useRef<HTMLInputElement | null>(null);
-  // const [scriptLoaded, setScriptLoaded] = useState(false);
+
 
   return (
     <div className="p-2 space-y-3">

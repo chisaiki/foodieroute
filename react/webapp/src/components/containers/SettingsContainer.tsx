@@ -1,8 +1,7 @@
 import SettingsView from "../views/Settings";
 import { useEffect, useState } from "react";
 import { useAuth } from "../../config/AuthUser"; 
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../../config/firebase";
+import { updateUserVegetarianStatus } from '../../config/AuthUser';
 
 function SettingsContainer() {
   
@@ -18,21 +17,17 @@ function SettingsContainer() {
   }, [userData])
 
 
-
   const userId = userData?.uid ?? ""; 
 
 
   const toggleVegetarian = async () => {
-    console.log("Toggleing Vegi");
+    console.log("Toggling Vegi");
 
-    if (!userId) return; // Prevent errors if no user is logged in
+    if (!userId) return; 
 
-    try { // Update doc 
-      const userRef = doc(db, "users", userId);
-      await updateDoc(userRef, { vegetarian: !isVegi }); 
-      setIsVegi(!isVegi);// changes user data on the frontend 
-    } catch (error) {
-      console.error("Error updating vegetarian status:", error);
+    const success = await updateUserVegetarianStatus(userId, !isVegi);
+    if (success) {
+      setIsVegi(!isVegi); 
     }
   };
 
@@ -40,7 +35,7 @@ function SettingsContainer() {
 
 
     return (
-      <SettingsView veg = {isVegi}  toggleVeg={toggleVegetarian} />
+      <SettingsView veg = {isVegi}  toggleVeg={toggleVegetarian} history={userData?.history ?? []} />
     );
 
 }
