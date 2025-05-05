@@ -27,7 +27,7 @@ export default function SettingsView({ veg, toggleVeg, history, onHistoryClick }
 
         <div className="flex flex-col items-start justify-around w-full">
           <h1 className="text-xl font-semibold mb-2">History</h1>
-          <div className="overflow-y-auto max-h-[300px] space-y-2 w-full">
+          <div className="overflow-y-auto max-h-full w-full">
             {history.map((item: UserHistory, index: number) => (
               <div 
                 key={index} 
