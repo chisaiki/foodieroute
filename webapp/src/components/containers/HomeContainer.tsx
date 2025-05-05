@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Place, PriceLevel } from "../../../types/types";
 import {decodePlaces} from "../../../types/decoders";
 import { useAuth, addSearchToHistory } from '../../config/AuthUser';
+import { useLocation } from 'react-router-dom';
 // import { LoadScript } from '@react-google-maps/api';
 
 
@@ -17,10 +18,11 @@ import { useAuth, addSearchToHistory } from '../../config/AuthUser';
 
 
 function HomeContainer() {
+
   const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { userData } = useAuth();
 
-
+  const location = useLocation(); // For history page
   // const [isLoaded, setIsLoaded] = useState(false);
 
     let SORT_METHOD = "Rating";
@@ -107,6 +109,21 @@ function HomeContainer() {
     // };
   }, [googleMapsAPIKey]);
 
+  // Handle history item data from navigation
+  useEffect(() => {
+    const historyItem = location.state?.historyItem; //If we came from the history page
+    if (historyItem) {
+      console.log("History item found");
+      setOrigin(historyItem.origin);
+      setDest(historyItem.destination);
+      setOrigin_string(historyItem.origin_string);
+      setDestination_string(historyItem.destination_string);
+      // Trigger the search after setting the values
+      setTimeout(() => {
+        triggerSearch();
+      }, 100);
+    }
+  }, [location.state]);
 
     const searchRoute = (map: any) => {
       const directionsService = new google.maps.DirectionsService();
