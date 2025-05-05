@@ -148,15 +148,15 @@ function HomeContainer() {
             midpoints.forEach(([lat, lng]) => {
               const point = { lat, lng };
               locations.push(point); 
-              new google.maps.Marker({
-                position: point,
-                map,
-                icon: {
-                  path: google.maps.SymbolPath.CIRCLE,
-                  fillColor: "blue",
-                  scale: 6,
-                },
-              });
+              // new google.maps.Marker({
+              //   position: point,
+              //   map,
+              //   icon: {
+              //     path: google.maps.SymbolPath.CIRCLE,
+              //     fillColor: "blue",
+              //     scale: 6,
+              //   },
+              // });
             });
 
             try {
@@ -165,21 +165,64 @@ function HomeContainer() {
               const decodedPlaces: Place[] = decodePlaces(finalPlaces);
               setPlaces(decodedPlaces);
 
-              // After everything is successful, save the search to history
-              if (userData?.uid) {
-                const success = await addSearchToHistory(
-                  userData.uid,
-                  ORIGIN,
-                  DESTINATION,
-                  origin_string,
-                  destination_string
-                );
-                if (success) {
-                  console.log("Successfully saved search to history");
-                } else {
-                  console.log("Failed to save search to history");
+              finalPlaces.forEach((place) => {
+                if (place.location) {
+                  const marker = new google.maps.Marker({
+                    position: {
+                      lat: place.location.latitude,
+                      lng: place.location.longitude,
+                    },
+                    map: map,
+                    title: place.displayName?.text || 'Unnamed Place',
+                  });
+    
+                  const infoWindow = new google.maps.InfoWindow();
+    
+                  marker.addListener('click', () => {
+                    const firstPhoto = place.photos?.[0];
+                    const photoName = firstPhoto?.name;
+    
+                    if (photoName) {
+                      const photoUrl = `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400&key=${googleMapsAPIKey}`;
+    
+                      const img = new Image();
+                      img.onload = () => {
+                        const infoContent = `
+                          <div style="max-width: 300px;">
+                            <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
+                            <img src="${photoUrl}" alt="Place Photo" style="width: 100%; height: auto;" />
+                            <p>${place.formattedAddress || ''}</p>
+                          </div>
+                        `;
+                        infoWindow.setContent(infoContent);
+                        infoWindow.open(map, marker);
+                      };
+                      img.onerror = () => {
+                        const infoContent = `
+                          <div style="max-width: 300px;">
+                            <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
+                            <p>No photo available.</p>
+                            <p>${place.formattedAddress || ''}</p>
+                          </div>
+                        `;
+                        infoWindow.setContent(infoContent);
+                        infoWindow.open(map, marker);
+                      };
+                      img.src = photoUrl;
+                    } else {
+                      const infoContent = `
+                        <div style="max-width: 300px;">
+                          <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
+                          <p>No photo available.</p>
+                          <p>${place.formattedAddress || ''}</p>
+                        </div>
+                      `;
+                      infoWindow.setContent(infoContent);
+                      infoWindow.open(map, marker);
+                    }
+                  });
                 }
-              }
+              });
             } catch (error) {
               console.error("Error processing places or saving history:", error);
             }
@@ -301,15 +344,15 @@ function HomeContainer() {
         west: lowLng
     };
   
-    const rectangle = new google.maps.Rectangle({
-        map: map,
-        bounds: bounds,
-        fillColor: "#0000FF", // Semi-transparent blue
-        fillOpacity: 0.1,
-        strokeColor: "#0000FF", // Blue rectangle border
-        strokeOpacity: 0.5,
-        strokeWeight: 1
-    });
+    // const rectangle = new google.maps.Rectangle({
+    //     map: map,
+    //     bounds: bounds,
+    //     fillColor: "#0000FF", // Semi-transparent blue
+    //     fillOpacity: 0.1,
+    //     strokeColor: "#0000FF", // Blue rectangle border
+    //     strokeOpacity: 0.5,
+    //     strokeWeight: 1
+    // });
   
     const body = {
         "textQuery": searchQuery,
