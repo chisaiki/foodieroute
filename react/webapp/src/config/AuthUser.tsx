@@ -100,7 +100,8 @@ export const addSearchToHistory = async (
   origin: { lat: number; lng: number },
   destination: { lat: number; lng: number },
   origin_string: string,
-  destination_string: string
+  destination_string: string,
+  travelMode: google.maps.TravelMode
 ) => {
   try {
     const userRef = doc(db, "users", userId);
@@ -115,7 +116,7 @@ export const addSearchToHistory = async (
     const newHistory: UserHistory = {
       origin,
       destination,
-      travelMode: "DRIVING", // Hard coded for now
+      travelMode, // Hard coded for now
       origin_string,
       destination_string
     };

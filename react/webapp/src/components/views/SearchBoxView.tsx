@@ -7,8 +7,10 @@ type SearchBoxViewProps = {
   searchQuery: string;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   triggerSearch: () => void;
-  originRef: React.RefObject<HTMLInputElement | null >;
+  originRef: React.RefObject<HTMLInputElement | null>;
   destRef: React.RefObject<HTMLInputElement | null>;
+  travelMode: google.maps.TravelMode;
+  setTravelMode: React.Dispatch<React.SetStateAction<google.maps.TravelMode>>;
 };
 
 // const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -27,6 +29,9 @@ export default function SearchBoxView({
   triggerSearch,
   originRef,
   destRef,
+  //NEW:
+  travelMode,
+  setTravelMode
 }: SearchBoxViewProps) {
 
 
@@ -62,10 +67,26 @@ export default function SearchBoxView({
         />
       </div>
 
+      <div>
+        <label>Mode of travel:</label>
+        <select
+          value={travelMode}
+          onChange={(e) =>
+            setTravelMode(e.target.value as google.maps.TravelMode)
+          }
+          className="border p-1 w-full"
+        >
+          <option value="DRIVING">Driving</option>
+          <option value="WALKING">Walking</option>
+          <option value="TRANSIT">Public Transit</option>
+          <option value="BICYCLING">Bicycling</option>
+        </select>
+      </div>
+
       <button
         className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
         onClick={triggerSearch}
-        // disabled={true}
+      // disabled={true}
       >
         Search
       </button>
