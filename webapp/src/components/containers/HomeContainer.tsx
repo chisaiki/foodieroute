@@ -2,7 +2,7 @@ import HomeView from "../views/HomeView";
 import { useEffect, useRef, useState } from "react";
 import { Place, PriceLevel } from "../../../types/types";
 import {decodePlaces} from "../../../types/decoders";
-import { useAuth, addSearchToHistory } from '../../config/AuthUser';
+import { useAuth, useUpdateUserHistory } from '../../config/AuthUser';
 import { useLocation } from 'react-router-dom';
 // import { LoadScript } from '@react-google-maps/api';
 
@@ -21,7 +21,7 @@ function HomeContainer() {
 
   const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { userData } = useAuth();
-
+  const updateUserHistory = useUpdateUserHistory();
   const location = useLocation(); // For history page
   // const [isLoaded, setIsLoaded] = useState(false);
 
@@ -223,6 +223,23 @@ function HomeContainer() {
                   });
                 }
               });
+
+              // After everything is successful, save the search to history
+              // Only save if we have a valid origin and destination to prevent adding empty searches
+              if (userData?.uid && origin_string !== "" && destination_string !== "") {
+                const success = await updateUserHistory(
+                  userData.uid,
+                  ORIGIN,
+                  DESTINATION,
+                  origin_string,
+                  destination_string
+                );
+                if (success) {
+                  console.log("Successfully saved search to history");
+                } else {
+                  console.log("Failed to save search to history");
+                }
+              }
             } catch (error) {
               console.error("Error processing places or saving history:", error);
             }
