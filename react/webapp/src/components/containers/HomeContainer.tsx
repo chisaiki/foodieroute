@@ -117,15 +117,18 @@ function HomeContainer() {
     // };
   }, [googleMapsAPIKey]);
 
-  // Decide if text should be white or black on a given hex color
+  // choose if text should be white or black on a given hex color. This is a helper function for displaying color
+  // when public transportation is selected
   const contrastText = (hex: string) => {
-    // strip # and convert to RGB
+    // strip number and convert to RGB
     const r = parseInt(hex.substr(1, 2), 16);
     const g = parseInt(hex.substr(3, 2), 16);
     const b = parseInt(hex.substr(5, 2), 16);
     // luminance formula
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.5 ? "#000000" : "#FFFFFF";
+    const brightness_level = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    if (brightness_level > 0.5)
+      return "#000000";
+    return "#FFFFFF";
   };
 
   // Draw one rectangle around each sample‑point so they appear instantly
@@ -134,7 +137,7 @@ function HomeContainer() {
     map: google.maps.Map
   ) => {
     const LAT_METERS = 111_320;
-    const RADIUS_M = RADIUS;            // uses your existing constant
+    const RADIUS_M = RADIUS; // uses existing constant
 
     locs.forEach(({ lat, lng }) => {
       const latDelta = RADIUS_M / LAT_METERS;
@@ -163,7 +166,7 @@ function HomeContainer() {
   const searchRoute = (map: google.maps.Map) => {
     polylinesRef.current.forEach(p => p.setMap(null));
     polylinesRef.current = [];
-    // close stale info window when we want to wipe the map
+    // close unneeded info window when we want to clear the map
     if (activeInfoWindowRef.current) {
       activeInfoWindowRef.current.close();
       activeInfoWindowRef.current = null;
@@ -183,7 +186,7 @@ function HomeContainer() {
     const directionsRenderer =
       directionsRendererRef.current ?? new google.maps.DirectionsRenderer();
     directionsRenderer.setMap(map);
-    directionsRendererRef.current = directionsRenderer;        // Current directions
+    directionsRendererRef.current = directionsRenderer; // Current directions
 
     //NEW
     if (travelMode === "TRANSIT") {
@@ -196,7 +199,7 @@ function HomeContainer() {
       {
         origin: ORIGIN,
         destination: DESTINATION,
-        travelMode,            // DRIVING | WALKING | TRANSIT | BICYCLING
+        travelMode,            // currently DRIVING, WALKING,TRANSIT, and BICYCLING
       },
       async (response: any, status: any) => {
         if (status === google.maps.DirectionsStatus.OK) {
@@ -204,7 +207,7 @@ function HomeContainer() {
             // unchanged behaviour for Driving / Walking / Bicycling
             directionsRenderer.setDirections(response);
           } else {
-            // ─── Google‑Maps‑style colored transit segments ──────────────────────────
+            // Google Maps style inspired 
             const legs = response.routes[0].legs;
             legs.forEach((leg: any) => {
               leg.steps.forEach((step: any) => {
@@ -214,7 +217,7 @@ function HomeContainer() {
 
                 // Default grey for walking links
                 let color = "#808080";
-                // If the step is transit, use the agency’s color (falls back to blue)
+                // Use the transit agency's color for transit steps but default to blue if not available
                 if (step.travel_mode === "TRANSIT" && step.transit) {
                   color = step.transit.line.color || "#3366FF";
                 }
@@ -228,7 +231,7 @@ function HomeContainer() {
                 });
                 polylinesRef.current.push(poly); // so we can clear later
 
-                // ── NEW: add a little badge (line short‑name) at the start of the segment ──
+                //add a little badge at the start of the segment
                 if (step.travel_mode === "TRANSIT" && step.transit) {
                   // remove a trailing “line” so badge is just the train number or letter and nothing else
                   const rawName = step.transit.line.short_name || step.transit.line.name || "";
@@ -284,7 +287,7 @@ function HomeContainer() {
             markersRef.current.push(m);               // push markers
           });
 
-          // ★ Draw all search rectangles synchronously (instant on‑screen)
+          // draw all search rectangles synchronously such that it appears instantly on screen
           drawSearchRectangles(locations, map);
 
           try {
@@ -440,7 +443,7 @@ function HomeContainer() {
       locations.map((loc) => fetchNearbyPlaces(loc, map))
     );
 
-    // Flatten the 2‑D array to 1‑D
+    // flatten 2D array to 1D
     return results.flat();
   }
 
