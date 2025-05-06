@@ -33,11 +33,12 @@ type HomeViewProps = {
   destRef: React.RefObject<HTMLInputElement | null>;
 
 
-  /** NEW — selected mode + setter from parent */
+  /** the selected mode and setter from parent */
   travelMode: google.maps.TravelMode;
   setTravelMode: React.Dispatch<
     React.SetStateAction<google.maps.TravelMode>
   >;
+  
 };
 
 export default function HomeView({
@@ -57,7 +58,7 @@ export default function HomeView({
   destRef,
 
 
-  /* NEW props arrive here */
+  /* New props arrive here */
   travelMode,
   setTravelMode,
 

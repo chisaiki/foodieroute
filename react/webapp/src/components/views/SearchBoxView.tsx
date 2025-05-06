@@ -68,7 +68,7 @@ export default function SearchBoxView({
       </div>
 
       <div>
-        <label>Mode of travel:</label>
+        <label>Mode of Travel:</label>
         <select
           value={travelMode}
           onChange={(e) =>

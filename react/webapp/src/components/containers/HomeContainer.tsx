@@ -110,31 +110,48 @@ function HomeContainer() {
   }, [googleMapsAPIKey]);
 
 
-  const searchRoute = (map: any) => {
+  const searchRoute = (map: google.maps.Map) => {
+    // Remove anything from a previous display
+    if (directionsRendererRef.current) {
+      directionsRendererRef.current.setMap(null);
+    }
+    markersRef.current.forEach(m => m.setMap(null));
+    markersRef.current = [];
+    circlesRef.current.forEach(c => c.setMap(null));
+    circlesRef.current = [];
+
+    // Services
     const directionsService = new google.maps.DirectionsService();
-    const directionsRenderer = new google.maps.DirectionsRenderer({ map });
+    const directionsRenderer =
+      directionsRendererRef.current ?? new google.maps.DirectionsRenderer();
+    directionsRenderer.setMap(map);
+    directionsRendererRef.current = directionsRenderer;        // Current directions
 
     directionsService.route(
       {
         origin: ORIGIN,
         destination: DESTINATION,
-        travelMode,     // DRIVING | WALKING | TRANSIT | BICYCLING
+        travelMode,            // DRIVING | WALKING | TRANSIT | BICYCLING
       },
-      async (response: any, status: any) => {
+      async (response, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
           directionsRenderer.setDirections(response);
+
+          // Mid‑point markers along the polyline
           const encodedPolyline = response.routes[0].overview_polyline;
           const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
 
-          const coords = decodedPath.map((point: any) => [point.lat(), point.lng()]);
+          const coords = decodedPath.map(p => [p.lat(), p.lng()]);
           const reduced = reduceCoordinates(coords);
           const midpoints = getCircleCenters(reduced);
           const locations: { lat: number; lng: number }[] = [];
+
           midpoints.forEach(([lat, lng]) => {
-            const point = { lat, lng };
-            locations.push(point);
-            new google.maps.Marker({
-              position: point,
+            const pos = { lat, lng };
+            locations.push(pos);
+
+            const m = new google.maps.Marker({
+              position: pos,
               map,
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
@@ -142,51 +159,48 @@ function HomeContainer() {
                 scale: 6,
               },
             });
+            markersRef.current.push(m);               // push markers
           });
 
           try {
             const finalPlaces = await getSortedAndUniquePlaces(locations, map);
-            // Bootleg decoder
             const decodedPlaces: Place[] = decodePlaces(finalPlaces);
             setPlaces(decodedPlaces);
-            finalPlaces.forEach((place) => {
-              const firstPhoto = place.photos?.[0];
-              const photoName = firstPhoto?.name;
 
-              const photoUrl = photoName
-                ? `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400&key=${googleMapsAPIKey}`
+            finalPlaces.forEach((place) => {
+              if (!place.location) return;
+
+              const marker = new google.maps.Marker({
+                position: {
+                  lat: place.location.latitude,
+                  lng: place.location.longitude,
+                },
+                map,
+                title: place.displayName?.text || 'Unnamed Place',
+              });
+              markersRef.current.push(marker);       // Push each marker
+
+              const firstPhoto = place.photos?.[0];
+              const photoUrl = firstPhoto?.name
+                ? `https://places.googleapis.com/v1/${firstPhoto.name}/media?maxWidthPx=400&key=${googleMapsAPIKey}`
                 : null;
 
-              if (place.location) {
-                const marker = new google.maps.Marker({
-                  position: {
-                    lat: place.location.latitude,
-                    lng: place.location.longitude,
-                  },
-                  map: map,
-                  title: place.displayName?.text || 'Unnamed Place',
-                });
-
-                const infoContent = `
-                    <div style="max-width: 300px;">
-                      <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
-                      ${photoUrl ? `<img src="${photoUrl}" alt="Place Photo" style="width: 100%; height: auto;" />` : '<p>No photo available.</p>'}
-                      <p>${place.formattedAddress || ''}</p>
-                    </div>
-                  `;
-
-                const infoWindow = new google.maps.InfoWindow({
-                  content: infoContent,
-                });
-
-                marker.addListener('click', () => {
-                  infoWindow.open(map, marker);
-                });
-              }
+              const infoWindow = new google.maps.InfoWindow({
+                content: `
+                  <div style="max-width:300px;">
+                    <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
+                    ${photoUrl
+                    ? `<img src="${photoUrl}" style="width:100%;height:auto" />`
+                    : '<p>No photo available.</p>'}
+                    <p>${place.formattedAddress || ''}</p>
+                  </div>`,
+              });
+              marker.addListener('click', () => infoWindow.open(map, marker));
             });
+
             // After everything is successful, save the search to history
             if (userData?.uid) {
-              const success = await addSearchToHistory(
+              await addSearchToHistory(
                 userData.uid,
                 ORIGIN,
                 DESTINATION,
@@ -194,14 +208,9 @@ function HomeContainer() {
                 destination_string,
                 travelMode
               );
-              if (success) {
-                console.log("Successfully saved search to history");
-              } else {
-                console.log("Failed to save search to history");
-              }
             }
-          } catch (error) {
-            console.error("Error processing places or saving history:", error);
+          } catch (err) {
+            console.error("Error processing places or saving history:", err);
           }
         } else {
           console.error("Error with Directions API:", status);
@@ -209,6 +218,7 @@ function HomeContainer() {
       }
     );
   };
+
 
   async function getSortedAndUniquePlaces(locations: { lat: number; lng: number }[], map: google.maps.Map): Promise<any[]> {
     try {
@@ -330,6 +340,9 @@ function HomeContainer() {
       strokeOpacity: 0.5,
       strokeWeight: 1
     });
+
+    //track rectangle so it clears next search
+    circlesRef.current.push(rectangle as unknown as google.maps.Circle);
 
     const body = {
       "textQuery": searchQuery,
