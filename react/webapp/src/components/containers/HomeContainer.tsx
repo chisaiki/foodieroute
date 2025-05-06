@@ -74,7 +74,9 @@ function HomeContainer() {
   const polylinesRef = useRef<google.maps.Polyline[]>([]);
 
   // just under the other useState hooks
-  const [travelMode, setTravelMode] = useState<google.maps.TravelMode>("DRIVING");
+  const [travelMode, setTravelMode] = useState<google.maps.TravelMode>(
+    "DRIVING" as google.maps.TravelMode
+  );
 
   const RADIUS = 200;
   const REDUCTION_CONSTANT = 50;
@@ -196,7 +198,7 @@ function HomeContainer() {
         destination: DESTINATION,
         travelMode,            // DRIVING | WALKING | TRANSIT | BICYCLING
       },
-      async (response, status) => {
+      async (response: any, status: any) => {
         if (status === google.maps.DirectionsStatus.OK) {
           if (travelMode !== "TRANSIT") {
             // unchanged behaviour for Driving / Walking / Bicycling
@@ -204,7 +206,7 @@ function HomeContainer() {
           } else {
             // ─── Google‑Maps‑style colored transit segments ──────────────────────────
             const legs = response.routes[0].legs;
-            legs.forEach((leg) => {
+            legs.forEach((leg: any) => {
               leg.steps.forEach((step: any) => {
                 const stepPath = google.maps.geometry.encoding.decodePath(
                   step.polyline.points
@@ -261,7 +263,7 @@ function HomeContainer() {
           const encodedPolyline = response.routes[0].overview_polyline;
           const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
 
-          const coords = decodedPath.map(p => [p.lat(), p.lng()]);
+          const coords = decodedPath.map((p: any) => [p.lat(), p.lng()]);
           const reduced = reduceCoordinates(coords);
           const midpoints = getCircleCenters(reduced);
           const locations: { lat: number; lng: number }[] = [];
@@ -433,12 +435,12 @@ function HomeContainer() {
     locations: { lat: number; lng: number }[],
     map: google.maps.Map
   ): Promise<Place[]> {
-    // Launch all fetches simultaneously
+    // launch all fetches simultaneously for performance increase
     const results = await Promise.all(
       locations.map((loc) => fetchNearbyPlaces(loc, map))
     );
 
-    // Flatten the 2‑D array → 1‑D
+    // Flatten the 2‑D array to 1‑D
     return results.flat();
   }
 
