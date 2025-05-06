@@ -6,6 +6,7 @@ import { useAuth, addSearchToHistory } from '../../config/AuthUser';
 // import { LoadScript } from '@react-google-maps/api';
 
 
+
 // TypeScript setup
 declare global {
   interface Window {
@@ -17,6 +18,8 @@ declare const google: any;
 
 
 function HomeContainer() {
+  // track whichever info window is open so we can then close it
+  const activeInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { userData } = useAuth();
 
@@ -67,6 +70,9 @@ function HomeContainer() {
   const startMarkerRef = useRef<google.maps.Marker | null>(null);
   const endMarkerRef = useRef<google.maps.Marker | null>(null);
 
+  // Track colored polylines so we can clear them next search
+  const polylinesRef = useRef<google.maps.Polyline[]>([]);
+
   // just under the other useState hooks
   const [travelMode, setTravelMode] = useState<google.maps.TravelMode>("DRIVING");
 
@@ -109,8 +115,58 @@ function HomeContainer() {
     // };
   }, [googleMapsAPIKey]);
 
+  // Decide if text should be white or black on a given hex color
+  const contrastText = (hex: string) => {
+    // strip # and convert to RGB
+    const r = parseInt(hex.substr(1, 2), 16);
+    const g = parseInt(hex.substr(3, 2), 16);
+    const b = parseInt(hex.substr(5, 2), 16);
+    // luminance formula
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? "#000000" : "#FFFFFF";
+  };
+
+  // Draw one rectangle around each sample‑point so they appear instantly
+  const drawSearchRectangles = (
+    locs: { lat: number; lng: number }[],
+    map: google.maps.Map
+  ) => {
+    const LAT_METERS = 111_320;
+    const RADIUS_M = RADIUS;            // uses your existing constant
+
+    locs.forEach(({ lat, lng }) => {
+      const latDelta = RADIUS_M / LAT_METERS;
+      const lonDelta =
+        RADIUS_M / (LAT_METERS * Math.cos(lat * (Math.PI / 180)));
+
+      const rect = new google.maps.Rectangle({
+        map,
+        bounds: {
+          north: lat + latDelta,
+          south: lat - latDelta,
+          east: lng + lonDelta,
+          west: lng - lonDelta,
+        },
+        fillColor: "#0000FF",
+        fillOpacity: 0.1,
+        strokeColor: "#0000FF",
+        strokeOpacity: 0.5,
+        strokeWeight: 1,
+      });
+
+      circlesRef.current.push(rect as unknown as google.maps.Circle);
+    });
+  };
 
   const searchRoute = (map: google.maps.Map) => {
+    polylinesRef.current.forEach(p => p.setMap(null));
+    polylinesRef.current = [];
+    // close stale info window when we want to wipe the map
+    if (activeInfoWindowRef.current) {
+      activeInfoWindowRef.current.close();
+      activeInfoWindowRef.current = null;
+    }
+
     // Remove anything from a previous display
     if (directionsRendererRef.current) {
       directionsRendererRef.current.setMap(null);
@@ -127,6 +183,13 @@ function HomeContainer() {
     directionsRenderer.setMap(map);
     directionsRendererRef.current = directionsRenderer;        // Current directions
 
+    //NEW
+    if (travelMode === "TRANSIT") {
+      directionsRenderer.setOptions({
+        polylineOptions: { strokeOpacity: 0 }, // keep turns / markers, hide path
+      });
+    }
+
     directionsService.route(
       {
         origin: ORIGIN,
@@ -135,7 +198,64 @@ function HomeContainer() {
       },
       async (response, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
-          directionsRenderer.setDirections(response);
+          if (travelMode !== "TRANSIT") {
+            // unchanged behaviour for Driving / Walking / Bicycling
+            directionsRenderer.setDirections(response);
+          } else {
+            // ─── Google‑Maps‑style colored transit segments ──────────────────────────
+            const legs = response.routes[0].legs;
+            legs.forEach((leg) => {
+              leg.steps.forEach((step: any) => {
+                const stepPath = google.maps.geometry.encoding.decodePath(
+                  step.polyline.points
+                );
+
+                // Default grey for walking links
+                let color = "#808080";
+                // If the step is transit, use the agency’s color (falls back to blue)
+                if (step.travel_mode === "TRANSIT" && step.transit) {
+                  color = step.transit.line.color || "#3366FF";
+                }
+
+                const poly = new google.maps.Polyline({
+                  path: stepPath,
+                  strokeColor: color,
+                  strokeOpacity: 1,
+                  strokeWeight: 6,
+                  map,
+                });
+                polylinesRef.current.push(poly); // so we can clear later
+
+                // ── NEW: add a little badge (line short‑name) at the start of the segment ──
+                if (step.travel_mode === "TRANSIT" && step.transit) {
+                  // remove a trailing “line” so badge is just the train number or letter and nothing else
+                  const rawName = step.transit.line.short_name || step.transit.line.name || "";
+                  const shortName = rawName.replace(/\s*line\s*$/i, "");
+                  if (shortName) {
+                    const badge = new google.maps.Marker({
+                      position: step.start_location,
+                      map,
+                      icon: {
+                        path: google.maps.SymbolPath.CIRCLE,   // simple round badge
+                        fillColor: color,
+                        fillOpacity: 1,
+                        strokeColor: "#FFFFFF",
+                        strokeWeight: 1,
+                        scale: 10,                             // size of circle
+                      },
+                      label: {
+                        text: shortName,
+                        color: contrastText(color),
+                        fontWeight: "bold",
+                      },
+                      zIndex: 9999,                            // keep on top
+                    });
+                    markersRef.current.push(badge);            // clear on next search
+                  }
+                }
+              });
+            });
+          }
 
           // Mid‑point markers along the polyline
           const encodedPolyline = response.routes[0].overview_polyline;
@@ -161,6 +281,9 @@ function HomeContainer() {
             });
             markersRef.current.push(m);               // push markers
           });
+
+          // ★ Draw all search rectangles synchronously (instant on‑screen)
+          drawSearchRectangles(locations, map);
 
           try {
             const finalPlaces = await getSortedAndUniquePlaces(locations, map);
@@ -195,7 +318,15 @@ function HomeContainer() {
                     <p>${place.formattedAddress || ''}</p>
                   </div>`,
               });
-              marker.addListener('click', () => infoWindow.open(map, marker));
+              marker.addListener("click", () => {
+                // Close any window that’s still open
+                if (activeInfoWindowRef.current) {
+                  activeInfoWindowRef.current.close();
+                }
+
+                infoWindow.open(map, marker);
+                activeInfoWindowRef.current = infoWindow; // Remember it
+              });
             });
 
             // After everything is successful, save the search to history
@@ -296,18 +427,20 @@ function HomeContainer() {
     return places_array;  // Return the sorted places array
   }
 
-  async function fetchAllNearbyPlaces(locations: { lat: number; lng: number }[], map: any): Promise<Place[]> {
-    const allPlaces: Place[] = [];
+  //modify fetchAllNearbyPlaces so that we await all Promises
+  //this ensures the markers are displayed almost instantaneously
+  async function fetchAllNearbyPlaces(
+    locations: { lat: number; lng: number }[],
+    map: google.maps.Map
+  ): Promise<Place[]> {
+    // Launch all fetches simultaneously
+    const results = await Promise.all(
+      locations.map((loc) => fetchNearbyPlaces(loc, map))
+    );
 
-    for (const location of locations) {
-      const places = await fetchNearbyPlaces(location, map);
-
-      allPlaces.push(...places);  // Spread the places array into allPlaces
-    }
-
-    return allPlaces;
+    // Flatten the 2‑D array → 1‑D
+    return results.flat();
   }
-
 
   async function fetchNearbyPlaces(location: { lat: number; lng: number }, map: any): Promise<Place[]> {
     let places_return: Place[] = [];
@@ -331,18 +464,18 @@ function HomeContainer() {
       west: lowLng
     };
 
-    const rectangle = new google.maps.Rectangle({
-      map: map,
-      bounds: bounds,
-      fillColor: "#0000FF", // Semi-transparent blue
-      fillOpacity: 0.1,
-      strokeColor: "#0000FF", // Blue rectangle border
-      strokeOpacity: 0.5,
-      strokeWeight: 1
-    });
+    // const rectangle = new google.maps.Rectangle({
+    //   map: map,
+    //   bounds: bounds,
+    //   fillColor: "#0000FF", // Semi-transparent blue
+    //   fillOpacity: 0.1,
+    //   strokeColor: "#0000FF", // Blue rectangle border
+    //   strokeOpacity: 0.5,
+    //   strokeWeight: 1
+    // });
 
-    //track rectangle so it clears next search
-    circlesRef.current.push(rectangle as unknown as google.maps.Circle);
+    // //track rectangle so it clears next search
+    // circlesRef.current.push(rectangle as unknown as google.maps.Circle);
 
     const body = {
       "textQuery": searchQuery,
