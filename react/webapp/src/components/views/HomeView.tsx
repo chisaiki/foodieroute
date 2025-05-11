@@ -38,7 +38,13 @@ type HomeViewProps = {
   setTravelMode: React.Dispatch<
     React.SetStateAction<google.maps.TravelMode>
   >;
-  
+
+  /* ★ NEW — sorting */
+  sortMethod: "Rating" | "Price" | "Count";
+  setSortMethod: React.Dispatch<
+    React.SetStateAction<"Rating" | "Price" | "Count">
+  >;
+
 };
 
 export default function HomeView({
@@ -57,10 +63,11 @@ export default function HomeView({
   originRef,
   destRef,
 
-
-  /* New props arrive here */
   travelMode,
   setTravelMode,
+
+  sortMethod,
+  setSortMethod,
 
 }: HomeViewProps) {
 
@@ -105,6 +112,8 @@ export default function HomeView({
               destRef={destRef}
               travelMode={travelMode}
               setTravelMode={setTravelMode}
+              sortMethod={sortMethod}
+              setSortMethod={setSortMethod}
             />
           </div>
 

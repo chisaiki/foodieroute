@@ -25,8 +25,7 @@ function HomeContainer() {
 
 
   // const [isLoaded, setIsLoaded] = useState(false);
-
-  let SORT_METHOD = "Rating";
+  const [sortMethod, setSortMethod] = useState<"Rating" | "Price" | "Count">("Rating");
 
   interface PlacesResponse {
     places: Place[];
@@ -233,9 +232,47 @@ function HomeContainer() {
 
                 //add a little badge at the start of the segment
                 if (step.travel_mode === "TRANSIT" && step.transit) {
-                  // remove a trailing “line” so badge is just the train number or letter and nothing else
-                  const rawName = step.transit.line.short_name || step.transit.line.name || "";
-                  const shortName = rawName.replace(/\s*line\s*$/i, "");
+                  //label initially empty
+                  let label = "";
+
+                  //check if the needed objects really exist
+                  if (step.transit && step.transit.line) {
+                    //we set a preference for the short name if it exists, otherwise settle fot the full name
+                    if (step.transit.line.short_name) {
+                      label = step.transit.line.short_name;
+                    }
+                    else if (step.transit.line.name) {
+                      label = step.transit.line.name;
+                    }
+                  }
+
+                  //remove any extra spaces and 'line' from label, ensuring any text is capitialized
+                  label = label.trim();
+                  // remove the word “line” if it’s sitting at the very end
+                  const lower = label.toLowerCase();
+                  // e.g. Central line would have the space character and line word removed
+                  if (lower.endsWith(" line")) {
+                    label = label.slice(0, -5);
+                    // e.g. BlueLine which would remove the word line     
+                  } else if (lower.endsWith("line")) {
+                    label = label.slice(0, -4);
+                  }
+                  // cleaar any remaining space
+                  label = label.trim();
+                  label = label.toUpperCase();
+
+                  //ensures that we only have the first word of the label, e.g. M15 SBS becomes M15.
+                  label = label.split(" ")[0];
+
+                  //if word is too long, reduce it to four characters to fit circle
+                  if (label.length > 4) {
+                    label = label.slice(0, 4);
+                  }
+
+                  // The resulting name with “N/A” as a safety precaution if not valid
+                  const shortName = label || "N/A";
+
+                  /* ───────────────────────────────────────────────────────────────────── */
                   if (shortName) {
                     const badge = new google.maps.Marker({
                       position: step.start_location,
@@ -411,7 +448,7 @@ function HomeContainer() {
   }
 
   function sortPlaces(places_array: any[]): any[] {
-    switch (SORT_METHOD) {
+    switch (sortMethod) {
       case "Price":
         places_array = sortPlacesByPriceLevel(places_array);
         break;
@@ -426,7 +463,7 @@ function HomeContainer() {
         break;
     }
 
-    console.log("Places have been sorted by SORT_METHOD: " + SORT_METHOD);
+    console.log("Places have been sorted by sortMethod: " + sortMethod);
     //console.log(places_array);
 
     return places_array;  // Return the sorted places array
@@ -684,6 +721,9 @@ function HomeContainer() {
 
       originRef={originRef}
       destRef={destRef}
+
+      sortMethod={sortMethod}
+      setSortMethod={setSortMethod}
     />
 
   );
