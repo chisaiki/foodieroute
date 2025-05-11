@@ -7,10 +7,9 @@ interface SettingsViewProps {
   veg: boolean;
   toggleVeg: () => void; // Function to toggle veg status
   history: UserHistory[];
-  onHistoryClick: (historyItem: UserHistory) => void;
 }
 
-export default function SettingsView({ veg, toggleVeg, history, onHistoryClick } : SettingsViewProps)
+export default function SettingsView({ veg, toggleVeg, history } : SettingsViewProps)
 {
 
   function UserHistory() {
@@ -27,13 +26,9 @@ export default function SettingsView({ veg, toggleVeg, history, onHistoryClick }
 
         <div className="flex flex-col items-start justify-around w-full">
           <h1 className="text-xl font-semibold mb-2">History</h1>
-          <div className="overflow-y-auto max-h-full w-full">
+          <div className="overflow-y-auto max-h-[300px] space-y-2 w-full">
             {history.map((item: UserHistory, index: number) => (
-              <div 
-                key={index} 
-                className="border p-2 rounded shadow-sm hover:bg-gray-100 cursor-pointer transition-colors"
-                onClick={() => onHistoryClick(item)}
-              >
+              <div key={index} className="border p-2 rounded shadow-sm">
                 <p className="text-sm font-medium">From: {item.origin_string}</p>
                 <p className="text-sm font-medium">To: {item.destination_string}</p>
                 <p className="text-xs text-gray-500">Mode: {item.travelMode}</p>

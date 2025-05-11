@@ -17,7 +17,7 @@ type HomeViewProps = {
   // setDest: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
   searchQuery: string;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-  
+
 
   apiGMapsKey: string;
   apiGPlaceskey: string;
@@ -29,16 +29,30 @@ type HomeViewProps = {
 
   mapRef: React.RefObject<HTMLDivElement | null>;
 
-  originRef: React.RefObject<HTMLInputElement| null>;
-  destRef: React.RefObject<HTMLInputElement| null>;
+  originRef: React.RefObject<HTMLInputElement | null>;
+  destRef: React.RefObject<HTMLInputElement | null>;
+
+
+  /** the selected mode and setter from parent */
+  travelMode: google.maps.TravelMode;
+  setTravelMode: React.Dispatch<
+    React.SetStateAction<google.maps.TravelMode>
+  >;
+
+  /* ★ NEW — sorting */
+  sortMethod: "Rating" | "Price" | "Count";
+  setSortMethod: React.Dispatch<
+    React.SetStateAction<"Rating" | "Price" | "Count">
+  >;
+
 };
 
-export default function HomeView({ 
-  places, setPlaces, 
+export default function HomeView({
+  places, setPlaces,
   origin, //setOrigin, 
   dest, //setDest,
   searchQuery, setSearchQuery,
-  apiGMapsKey, 
+  apiGMapsKey,
   apiGPlaceskey,
 
   searchRequested,
@@ -49,26 +63,32 @@ export default function HomeView({
   originRef,
   destRef,
 
+  travelMode,
+  setTravelMode,
+
+  sortMethod,
+  setSortMethod,
+
 }: HomeViewProps) {
 
   //future plans
   //const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-  return(
-  <div>
-    <div className="temp-nav-bar">
+  return (
+    <div>
+      <div className="temp-nav-bar">
         <NavigationButtons></NavigationButtons>
-    </div>
-    <div className="maingridwraper">
+      </div>
+      <div className="maingridwraper">
 
-      <div className="maingrid"> 
-        <div className="mainGridOne">
-          <ListView places={places}></ListView>
-        </div>
-        <div className="mainGridTwo">
-          <MapView mapRef={mapRef} ></MapView>
+        <div className="maingrid">
+          <div className="mainGridOne">
+            <ListView places={places}></ListView>
+          </div>
+          <div className="mainGridTwo">
+            <MapView mapRef={mapRef} ></MapView>
 
-          {/* <MapView
+            {/* <MapView
             mapsapiKey={apiGMapsKey}
             placesAPIKey={apiGPlaceskey}
             origin={origin}
@@ -78,25 +98,29 @@ export default function HomeView({
             searchRequested={searchRequested}
             setSearchRequested={setSearchRequested}>
           </MapView> */}
-          
-          {/* <MapErrorView></MapErrorView> */}
-        </div>
-        <div className="mainGridThree">
-        <SearchBoxView
-          // setOrigin={setOrigin}
-          // setDest={setDest}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          triggerSearch={triggerSearch}
-          originRef={originRef}
-          destRef={destRef}
-        />
-        </div>
 
+            {/* <MapErrorView></MapErrorView> */}
+          </div>
+          <div className="mainGridThree">
+            <SearchBoxView
+              // setOrigin={setOrigin}
+              // setDest={setDest}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              triggerSearch={triggerSearch}
+              originRef={originRef}
+              destRef={destRef}
+              travelMode={travelMode}
+              setTravelMode={setTravelMode}
+              sortMethod={sortMethod}
+              setSortMethod={setSortMethod}
+            />
+          </div>
+
+        </div>
       </div>
+
     </div>
 
-  </div>
-
-);
+  );
 }
