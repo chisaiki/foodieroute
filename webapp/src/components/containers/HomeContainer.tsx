@@ -1,35 +1,35 @@
 import HomeView from "../views/HomeView";
 import { useEffect, useRef, useState } from "react";
 import { Place, PriceLevel } from "../../../types/types";
-import {decodePlaces} from "../../../types/decoders";
-import { useAuth, useUpdateUserHistory } from '../../config/AuthUser';
-import { useLocation } from 'react-router-dom';
+import { decodePlaces } from "../../../types/decoders";
+import { useAuth, addSearchToHistory } from '../../config/AuthUser';
 // import { LoadScript } from '@react-google-maps/api';
 
 
-  // TypeScript setup
-  declare global {
-    interface Window {
-      initMap: () => void;
-    }
-  }
 
-  declare const google: any;
+// TypeScript setup
+declare global {
+  interface Window {
+    initMap: () => void;
+  }
+}
+
+declare const google: any;
 
 
 function HomeContainer() {
-
+  // track whichever info window is open so we can then close it
+  const activeInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   const { userData } = useAuth();
-  const updateUserHistory = useUpdateUserHistory();
-  const location = useLocation(); // For history page
+
+
   // const [isLoaded, setIsLoaded] = useState(false);
+  const [sortMethod, setSortMethod] = useState<"Rating" | "Price" | "Count">("Rating");
 
-    let SORT_METHOD = "Rating";
-
-    interface PlacesResponse {
-        places: Place[];
-    }
+  interface PlacesResponse {
+    places: Place[];
+  }
   // New Array of data type here
   // const [places, setPlaces] = useState<Places[]>([]);
   const [places, setPlaces] = useState<Place[]>([]);
@@ -61,7 +61,7 @@ function HomeContainer() {
 
   // Map related vars
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const mapInstance = useRef<any>(null); 
+  const mapInstance = useRef<any>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const circlesRef = useRef<google.maps.Circle[]>([]);
 
@@ -69,7 +69,14 @@ function HomeContainer() {
   const startMarkerRef = useRef<google.maps.Marker | null>(null);
   const endMarkerRef = useRef<google.maps.Marker | null>(null);
 
-  const TRAVEL_MODE = "DRIVING";
+  // Track colored polylines so we can clear them next search
+  const polylinesRef = useRef<google.maps.Polyline[]>([]);
+
+  // just under the other useState hooks
+  const [travelMode, setTravelMode] = useState<google.maps.TravelMode>(
+    "DRIVING" as google.maps.TravelMode
+  );
+
   const RADIUS = 200;
   const REDUCTION_CONSTANT = 50;
 
@@ -90,7 +97,7 @@ function HomeContainer() {
         center: ORIGIN,
         zoom: 15,
       });
-      mapInstance.current = map; 
+      mapInstance.current = map;
       //searchRoute(map);
     };
 
@@ -109,406 +116,547 @@ function HomeContainer() {
     // };
   }, [googleMapsAPIKey]);
 
-  // Handle history item data from navigation
-  useEffect(() => {
-    const historyItem = location.state?.historyItem; //If we came from the history page
-    if (historyItem) {
-      console.log("History item found");
-      setOrigin(historyItem.origin);
-      setDest(historyItem.destination);
-      setOrigin_string(historyItem.origin_string);
-      setDestination_string(historyItem.destination_string);
-      // Trigger the search after setting the values
-      setTimeout(() => {
-        triggerSearch();
-      }, 100);
-    }
-  }, [location.state]);
+  // choose if text should be white or black on a given hex color. This is a helper function for displaying color
+  // when public transportation is selected
+  const contrastText = (hex: string) => {
+    // strip number and convert to RGB
+    const r = parseInt(hex.substr(1, 2), 16);
+    const g = parseInt(hex.substr(3, 2), 16);
+    const b = parseInt(hex.substr(5, 2), 16);
+    // luminance formula
+    const brightness_level = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    if (brightness_level > 0.5)
+      return "#000000";
+    return "#FFFFFF";
+  };
 
-    const searchRoute = (map: any) => {
-      const directionsService = new google.maps.DirectionsService();
-      const directionsRenderer = new google.maps.DirectionsRenderer({ map });
-  
-      directionsService.route(
-        {
-          origin: ORIGIN,
-          destination: DESTINATION,
-          travelMode: TRAVEL_MODE,
+  // Draw one rectangle around each sample‑point so they appear instantly
+  const drawSearchRectangles = (
+    locs: { lat: number; lng: number }[],
+    map: google.maps.Map
+  ) => {
+    const LAT_METERS = 111_320;
+    const RADIUS_M = RADIUS; // uses existing constant
+
+    locs.forEach(({ lat, lng }) => {
+      const latDelta = RADIUS_M / LAT_METERS;
+      const lonDelta =
+        RADIUS_M / (LAT_METERS * Math.cos(lat * (Math.PI / 180)));
+
+      const rect = new google.maps.Rectangle({
+        map,
+        bounds: {
+          north: lat + latDelta,
+          south: lat - latDelta,
+          east: lng + lonDelta,
+          west: lng - lonDelta,
         },
-        async (response: any, status: any) => {
-          if (status === google.maps.DirectionsStatus.OK) {
+        fillColor: "#0000FF",
+        fillOpacity: 0.1,
+        strokeColor: "#0000FF",
+        strokeOpacity: 0.5,
+        strokeWeight: 1,
+      });
+
+      circlesRef.current.push(rect as unknown as google.maps.Circle);
+    });
+  };
+
+  const searchRoute = (map: google.maps.Map) => {
+    polylinesRef.current.forEach(p => p.setMap(null));
+    polylinesRef.current = [];
+    // close unneeded info window when we want to clear the map
+    if (activeInfoWindowRef.current) {
+      activeInfoWindowRef.current.close();
+      activeInfoWindowRef.current = null;
+    }
+
+    // Remove anything from a previous display
+    if (directionsRendererRef.current) {
+      directionsRendererRef.current.setMap(null);
+    }
+    markersRef.current.forEach(m => m.setMap(null));
+    markersRef.current = [];
+    circlesRef.current.forEach(c => c.setMap(null));
+    circlesRef.current = [];
+
+    // Services
+    const directionsService = new google.maps.DirectionsService();
+    const directionsRenderer =
+      directionsRendererRef.current ?? new google.maps.DirectionsRenderer();
+    directionsRenderer.setMap(map);
+    directionsRendererRef.current = directionsRenderer; // Current directions
+
+    //NEW
+    if (travelMode === "TRANSIT") {
+      directionsRenderer.setOptions({
+        polylineOptions: { strokeOpacity: 0 }, // keep turns / markers, hide path
+      });
+    }
+
+    directionsService.route(
+      {
+        origin: ORIGIN,
+        destination: DESTINATION,
+        travelMode,            // currently DRIVING, WALKING,TRANSIT, and BICYCLING
+      },
+      async (response: any, status: any) => {
+        if (status === google.maps.DirectionsStatus.OK) {
+          if (travelMode !== "TRANSIT") {
+            // unchanged behaviour for Driving / Walking / Bicycling
             directionsRenderer.setDirections(response);
-            const encodedPolyline = response.routes[0].overview_polyline;
-            const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
-  
-            const coords = decodedPath.map((point: any) => [point.lat(), point.lng()]);
-            const reduced = reduceCoordinates(coords);
-            const midpoints = getCircleCenters(reduced);
-            const locations: { lat: number; lng: number }[] = [];
-            midpoints.forEach(([lat, lng]) => {
-              const point = { lat, lng };
-              locations.push(point); 
-              // new google.maps.Marker({
-              //   position: point,
-              //   map,
-              //   icon: {
-              //     path: google.maps.SymbolPath.CIRCLE,
-              //     fillColor: "blue",
-              //     scale: 6,
-              //   },
-              // });
-            });
+          } else {
+            // Google Maps style inspired 
+            const legs = response.routes[0].legs;
+            legs.forEach((leg: any) => {
+              leg.steps.forEach((step: any) => {
+                const stepPath = google.maps.geometry.encoding.decodePath(
+                  step.polyline.points
+                );
 
-            try {
-              const finalPlaces = await getSortedAndUniquePlaces(locations, map);
-              // Bootleg decoder
-              const decodedPlaces: Place[] = decodePlaces(finalPlaces);
-              setPlaces(decodedPlaces);
+                // Default grey for walking links
+                let color = "#808080";
+                // Use the transit agency's color for transit steps but default to blue if not available
+                if (step.travel_mode === "TRANSIT" && step.transit) {
+                  color = step.transit.line.color || "#3366FF";
+                }
 
-              finalPlaces.forEach((place) => {
-                if (place.location) {
-                  const marker = new google.maps.Marker({
-                    position: {
-                      lat: place.location.latitude,
-                      lng: place.location.longitude,
-                    },
-                    map: map,
-                    title: place.displayName?.text || 'Unnamed Place',
-                  });
-    
-                  const infoWindow = new google.maps.InfoWindow();
-    
-                  marker.addListener('click', () => {
-                    const firstPhoto = place.photos?.[0];
-                    const photoName = firstPhoto?.name;
-    
-                    if (photoName) {
-                      const photoUrl = `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400&key=${googleMapsAPIKey}`;
-    
-                      const img = new Image();
-                      img.onload = () => {
-                        const infoContent = `
-                          <div style="max-width: 300px;">
-                            <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
-                            <img src="${photoUrl}" alt="Place Photo" style="width: 100%; height: auto;" />
-                            <p>${place.formattedAddress || ''}</p>
-                          </div>
-                        `;
-                        infoWindow.setContent(infoContent);
-                        infoWindow.open(map, marker);
-                      };
-                      img.onerror = () => {
-                        const infoContent = `
-                          <div style="max-width: 300px;">
-                            <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
-                            <p>No photo available.</p>
-                            <p>${place.formattedAddress || ''}</p>
-                          </div>
-                        `;
-                        infoWindow.setContent(infoContent);
-                        infoWindow.open(map, marker);
-                      };
-                      img.src = photoUrl;
-                    } else {
-                      const infoContent = `
-                        <div style="max-width: 300px;">
-                          <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
-                          <p>No photo available.</p>
-                          <p>${place.formattedAddress || ''}</p>
-                        </div>
-                      `;
-                      infoWindow.setContent(infoContent);
-                      infoWindow.open(map, marker);
+                const poly = new google.maps.Polyline({
+                  path: stepPath,
+                  strokeColor: color,
+                  strokeOpacity: 1,
+                  strokeWeight: 6,
+                  map,
+                });
+                polylinesRef.current.push(poly); // so we can clear later
+
+                //add a little badge at the start of the segment
+                if (step.travel_mode === "TRANSIT" && step.transit) {
+                  //label initially empty
+                  let label = "";
+
+                  //check if the needed objects really exist
+                  if (step.transit && step.transit.line) {
+                    //we set a preference for the short name if it exists, otherwise settle fot the full name
+                    if (step.transit.line.short_name) {
+                      label = step.transit.line.short_name;
                     }
-                  });
+                    else if (step.transit.line.name) {
+                      label = step.transit.line.name;
+                    }
+                  }
+
+                  //remove any extra spaces and 'line' from label, ensuring any text is capitialized
+                  label = label.trim();
+                  // remove the word “line” if it’s sitting at the very end
+                  const lower = label.toLowerCase();
+                  // e.g. Central line would have the space character and line word removed
+                  if (lower.endsWith(" line")) {
+                    label = label.slice(0, -5);
+                    // e.g. BlueLine which would remove the word line     
+                  } else if (lower.endsWith("line")) {
+                    label = label.slice(0, -4);
+                  }
+                  // cleaar any remaining space
+                  label = label.trim();
+                  label = label.toUpperCase();
+
+                  //ensures that we only have the first word of the label, e.g. M15 SBS becomes M15.
+                  label = label.split(" ")[0];
+
+                  //if word is too long, reduce it to four characters to fit circle
+                  if (label.length > 4) {
+                    label = label.slice(0, 4);
+                  }
+
+                  // The resulting name with “N/A” as a safety precaution if not valid
+                  const shortName = label || "N/A";
+
+                  /* ───────────────────────────────────────────────────────────────────── */
+                  if (shortName) {
+                    const badge = new google.maps.Marker({
+                      position: step.start_location,
+                      map,
+                      icon: {
+                        path: google.maps.SymbolPath.CIRCLE,   // simple round badge
+                        fillColor: color,
+                        fillOpacity: 1,
+                        strokeColor: "#FFFFFF",
+                        strokeWeight: 1,
+                        scale: 10,                             // size of circle
+                      },
+                      label: {
+                        text: shortName,
+                        color: contrastText(color),
+                        fontWeight: "bold",
+                      },
+                      zIndex: 9999,                            // keep on top
+                    });
+                    markersRef.current.push(badge);            // clear on next search
+                  }
                 }
               });
-
-              // After everything is successful, save the search to history
-              // Only save if we have a valid origin and destination to prevent adding empty searches
-              if (userData?.uid && origin_string !== "" && destination_string !== "") {
-                const success = await updateUserHistory(
-                  userData.uid,
-                  ORIGIN,
-                  DESTINATION,
-                  origin_string,
-                  destination_string
-                );
-                if (success) {
-                  console.log("Successfully saved search to history");
-                } else {
-                  console.log("Failed to save search to history");
-                }
-              }
-            } catch (error) {
-              console.error("Error processing places or saving history:", error);
-            }
-          } else {
-            console.error("Error with Directions API:", status);
-          }        
-        }
-      );
-    };
-  
-    async function getSortedAndUniquePlaces(locations: { lat: number; lng: number }[], map: google.maps.Map): Promise<any[]> {
-      try {
-        const allPlaces = await fetchAllNearbyPlaces(locations, map); // Fetch places from all locations
-        const uniquePlaces = removeDuplicates(allPlaces); // Remove duplicates
-        const sortedPlaces = sortPlaces(uniquePlaces); // Sort the places
-        //console.log(sortedPlaces); // Optionally log the final result
-        return sortedPlaces; // Return the final sorted and unique places
-      } catch (error) {
-        console.error("Error fetching or processing places:", error);
-        return []; // Return an empty array if there's an error
-      }
-    }
-  
-    // if there are multiple mcdonalds, will only show one
-    function removeDuplicates(places_array: any[]): any[] {
-      // Use a Set to track unique displayName.text values
-      const uniquePlaces: { lat: number; lng: number }[] = [];
-      const seenNames = new Set();
-  
-      places_array.forEach((place) => {
-          // Check if the place name has been seen before
-          if (!seenNames.has(place.displayName.text)) {
-              // If not, add to the unique places array and mark it as seen
-              uniquePlaces.push(place);
-              seenNames.add(place.displayName.text);
+            });
           }
-      });
-      return uniquePlaces;
+
+          // Mid‑point markers along the polyline
+          const encodedPolyline = response.routes[0].overview_polyline;
+          const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
+
+          const coords = decodedPath.map((p: any) => [p.lat(), p.lng()]);
+          const reduced = reduceCoordinates(coords);
+          const midpoints = getCircleCenters(reduced);
+          const locations: { lat: number; lng: number }[] = [];
+
+          midpoints.forEach(([lat, lng]) => {
+            const pos = { lat, lng };
+            locations.push(pos);
+
+            const m = new google.maps.Marker({
+              position: pos,
+              map,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                fillColor: "blue",
+                scale: 6,
+              },
+            });
+            markersRef.current.push(m);               // push markers
+          });
+
+          // draw all search rectangles synchronously such that it appears instantly on screen
+          drawSearchRectangles(locations, map);
+
+          try {
+            const finalPlaces = await getSortedAndUniquePlaces(locations, map);
+            const decodedPlaces: Place[] = decodePlaces(finalPlaces);
+            setPlaces(decodedPlaces);
+
+            finalPlaces.forEach((place) => {
+              if (!place.location) return;
+
+              const marker = new google.maps.Marker({
+                position: {
+                  lat: place.location.latitude,
+                  lng: place.location.longitude,
+                },
+                map,
+                title: place.displayName?.text || 'Unnamed Place',
+              });
+              markersRef.current.push(marker);       // Push each marker
+
+              const firstPhoto = place.photos?.[0];
+              const photoUrl = firstPhoto?.name
+                ? `https://places.googleapis.com/v1/${firstPhoto.name}/media?maxWidthPx=400&key=${googleMapsAPIKey}`
+                : null;
+
+              const infoWindow = new google.maps.InfoWindow({
+                content: `
+                  <div style="max-width:300px;">
+                    <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
+                    ${photoUrl
+                    ? `<img src="${photoUrl}" style="width:100%;height:auto" />`
+                    : '<p>No photo available.</p>'}
+                    <p>${place.formattedAddress || ''}</p>
+                  </div>`,
+              });
+              marker.addListener("click", () => {
+                // Close any window that’s still open
+                if (activeInfoWindowRef.current) {
+                  activeInfoWindowRef.current.close();
+                }
+
+                infoWindow.open(map, marker);
+                activeInfoWindowRef.current = infoWindow; // Remember it
+              });
+            });
+
+            // After everything is successful, save the search to history
+            if (userData?.uid) {
+              await addSearchToHistory(
+                userData.uid,
+                ORIGIN,
+                DESTINATION,
+                origin_string,
+                destination_string,
+                travelMode
+              );
+            }
+          } catch (err) {
+            console.error("Error processing places or saving history:", err);
+          }
+        } else {
+          console.error("Error with Directions API:", status);
+        }
+      }
+    );
+  };
+
+
+  async function getSortedAndUniquePlaces(locations: { lat: number; lng: number }[], map: google.maps.Map): Promise<any[]> {
+    try {
+      const allPlaces = await fetchAllNearbyPlaces(locations, map); // Fetch places from all locations
+      const uniquePlaces = removeDuplicates(allPlaces); // Remove duplicates
+      const sortedPlaces = sortPlaces(uniquePlaces); // Sort the places
+      //console.log(sortedPlaces); // Optionally log the final result
+      return sortedPlaces; // Return the final sorted and unique places
+    } catch (error) {
+      console.error("Error fetching or processing places:", error);
+      return []; // Return an empty array if there's an error
+    }
   }
-  
+
+  // if there are multiple mcdonalds, will only show one
+  function removeDuplicates(places_array: any[]): any[] {
+    // Use a Set to track unique displayName.text values
+    const uniquePlaces: { lat: number; lng: number }[] = [];
+    const seenNames = new Set();
+
+    places_array.forEach((place) => {
+      // Check if the place name has been seen before
+      if (!seenNames.has(place.displayName.text)) {
+        // If not, add to the unique places array and mark it as seen
+        uniquePlaces.push(place);
+        seenNames.add(place.displayName.text);
+      }
+    });
+    return uniquePlaces;
+  }
+
   function sortPlacesByRating(places_array: any[]): any[] {
     return places_array.sort((a, b) => b.rating - a.rating);
   }
-  
+
   // Function to sort places by price level
   function sortPlacesByPriceLevel(places_array: Place[]): Place[] {
     //https://developers.google.com/maps/documentation/places/web-service/reference/rest/v1/places
     const priceLevelOrder: Record<PriceLevel, number> = {
-        "PRICE_LEVEL_FREE": 1,
-        "PRICE_LEVEL_INEXPENSIVE": 2,
-        "PRICE_LEVEL_MODERATE": 3,
-        "PRICE_LEVEL_EXPENSIVE": 4,
-        "PRICE_LEVEL_VERY_EXPENSIVE": 5,
-        "PRICE_LEVEL_UNSPECIFIED": 6,
+      "PRICE_LEVEL_FREE": 1,
+      "PRICE_LEVEL_INEXPENSIVE": 2,
+      "PRICE_LEVEL_MODERATE": 3,
+      "PRICE_LEVEL_EXPENSIVE": 4,
+      "PRICE_LEVEL_VERY_EXPENSIVE": 5,
+      "PRICE_LEVEL_UNSPECIFIED": 6,
     };
-  
+
     return places_array.sort((a, b) => priceLevelOrder[a.priceLevel] - priceLevelOrder[b.priceLevel]);
   }
-  
+
   // Function to sort places by user rating count (descending)
   function sortPlacesByUserRatingCount(places_array: any[]): any[] {
     return places_array.sort((a, b) => b.userRatingCount - a.userRatingCount);
   }
-  
+
   function sortPlaces(places_array: any[]): any[] {
-    switch (SORT_METHOD) {
-        case "Price":
-            places_array = sortPlacesByPriceLevel(places_array);
-            break;
-        case "Rating":
-            places_array = sortPlacesByRating(places_array);
-            break;
-        case "Count":
-            places_array = sortPlacesByUserRatingCount(places_array);
-            break;
-        default:
-            console.log("Invalid sort method");
-            break;
+    switch (sortMethod) {
+      case "Price":
+        places_array = sortPlacesByPriceLevel(places_array);
+        break;
+      case "Rating":
+        places_array = sortPlacesByRating(places_array);
+        break;
+      case "Count":
+        places_array = sortPlacesByUserRatingCount(places_array);
+        break;
+      default:
+        console.log("Invalid sort method");
+        break;
     }
-  
-    console.log("Places have been sorted by SORT_METHOD: " + SORT_METHOD);
+
+    console.log("Places have been sorted by sortMethod: " + sortMethod);
     //console.log(places_array);
-  
+
     return places_array;  // Return the sorted places array
   }
-  
-    async function fetchAllNearbyPlaces(locations: { lat: number; lng: number }[], map: any): Promise<Place[]> {
-      const allPlaces: Place[] = [];
-    
-      for (const location of locations) {
-        const places = await fetchNearbyPlaces(location, map);
 
-        allPlaces.push(...places);  // Spread the places array into allPlaces
-      }
-    
-      return allPlaces;
-    }
-  
-  
+  //modify fetchAllNearbyPlaces so that we await all Promises
+  //this ensures the markers are displayed almost instantaneously
+  async function fetchAllNearbyPlaces(
+    locations: { lat: number; lng: number }[],
+    map: google.maps.Map
+  ): Promise<Place[]> {
+    // launch all fetches simultaneously for performance increase
+    const results = await Promise.all(
+      locations.map((loc) => fetchNearbyPlaces(loc, map))
+    );
+
+    // flatten 2D array to 1D
+    return results.flat();
+  }
+
   async function fetchNearbyPlaces(location: { lat: number; lng: number }, map: any): Promise<Place[]> {
     let places_return: Place[] = [];
     const url = `https://places.googleapis.com/v1/places:searchText?key=${googleMapsAPIKey}`;
-  
+
     const LATITUDE_DEGREE_METERS = 111320;
     const LONGITUDE_DEGREE_METERS = 111320;
-  
+
     const latChange = RADIUS / LATITUDE_DEGREE_METERS;
     const lonChange = RADIUS / (LONGITUDE_DEGREE_METERS * Math.cos(location.lat * (Math.PI / 180)));
-  
+
     const lowLat = location.lat - latChange;
     const highLat = location.lat + latChange;
     const lowLng = location.lng - lonChange;
     const highLng = location.lng + lonChange;
-  
+
     const bounds = {
-        north: highLat,
-        south: lowLat,
-        east: highLng,
-        west: lowLng
+      north: highLat,
+      south: lowLat,
+      east: highLng,
+      west: lowLng
     };
-  
+
     // const rectangle = new google.maps.Rectangle({
-    //     map: map,
-    //     bounds: bounds,
-    //     fillColor: "#0000FF", // Semi-transparent blue
-    //     fillOpacity: 0.1,
-    //     strokeColor: "#0000FF", // Blue rectangle border
-    //     strokeOpacity: 0.5,
-    //     strokeWeight: 1
+    //   map: map,
+    //   bounds: bounds,
+    //   fillColor: "#0000FF", // Semi-transparent blue
+    //   fillOpacity: 0.1,
+    //   strokeColor: "#0000FF", // Blue rectangle border
+    //   strokeOpacity: 0.5,
+    //   strokeWeight: 1
     // });
-  
+
+    // //track rectangle so it clears next search
+    // circlesRef.current.push(rectangle as unknown as google.maps.Circle);
+
     const body = {
-        "textQuery": searchQuery,
-        "locationRestriction": {
-            "rectangle": {
-                "low": { "latitude": lowLat, "longitude": lowLng },
-                "high": { "latitude": highLat, "longitude": highLng }
-            }
+      "textQuery": searchQuery,
+      "locationRestriction": {
+        "rectangle": {
+          "low": { "latitude": lowLat, "longitude": lowLng },
+          "high": { "latitude": highLat, "longitude": highLng }
         }
+      }
     };
-  
+
     try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Goog-FieldMask": [
-                    "places.displayName",
-                    "places.location",
-                    "places.photos",
-                    "places.rating",
-                    "places.priceLevel",
-                    "places.formattedAddress",
-                    "places.userRatingCount",
-                    "places.editorialSummary"
-                ].join(",")
-            },
-            body: JSON.stringify(body)
-        });
-  
-        const data: PlacesResponse = await response.json();
-        places_return = data.places || []; // Ensure places_return is populated with places from the response
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-FieldMask": [
+            "places.displayName",
+            "places.location",
+            "places.photos",
+            "places.rating",
+            "places.priceLevel",
+            "places.formattedAddress",
+            "places.userRatingCount",
+            "places.editorialSummary"
+          ].join(",")
+        },
+        body: JSON.stringify(body)
+      });
+
+      const data: PlacesResponse = await response.json();
+      places_return = data.places || []; // Ensure places_return is populated with places from the response
     } catch (error) {
-        console.error('Error during fetch:', error);
+      console.error('Error during fetch:', error);
     }
-  
+
     return places_return; // Return the places array after the fetch completes
   }
-  
+
 
 
   const metersToDegrees = (meters: number) => meters / 111320;
 
-    const perpendicularDistance = (
-      px: number,
-      py: number,
-      x1: number,
-      y1: number,
-      x2: number,
-      y2: number
-    ) =>
-      Math.abs((y2 - y1) * px - (x2 - x1) * py + x2 * y1 - y2 * x1) /
-      Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+  const perpendicularDistance = (
+    px: number,
+    py: number,
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number
+  ) =>
+    Math.abs((y2 - y1) * px - (x2 - x1) * py + x2 * y1 - y2 * x1) /
+    Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
 
-    const reduceCoordinates = (coords: number[][]): number[][] => {
-      const threshold = metersToDegrees(REDUCTION_CONSTANT);
-      let i = 0;
-      while (i < coords.length - 2) {
-        const [x1, y1] = coords[i];
-        const [x2, y2] = coords[i + 1];
-        const [x3, y3] = coords[i + 2];
-        const dist = perpendicularDistance(x2, y2, x1, y1, x3, y3);
-        if (dist < threshold) {
-          coords.splice(i + 1, 1);
-        } else {
-          i++;
-        }
+  const reduceCoordinates = (coords: number[][]): number[][] => {
+    const threshold = metersToDegrees(REDUCTION_CONSTANT);
+    let i = 0;
+    while (i < coords.length - 2) {
+      const [x1, y1] = coords[i];
+      const [x2, y2] = coords[i + 1];
+      const [x3, y3] = coords[i + 2];
+      const dist = perpendicularDistance(x2, y2, x1, y1, x3, y3);
+      if (dist < threshold) {
+        coords.splice(i + 1, 1);
+      } else {
+        i++;
       }
-      return coords;
-    };
+    }
+    return coords;
+  };
 
-    const generatePointsAlongLine = (
-      x1: number,
-      y1: number,
-      x2: number,
-      y2: number,
-      radius: number = RADIUS
-    ) => {
-      const dist = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-      const steps = Math.floor(dist / (2 * metersToDegrees(radius)));
-      const dx = (x2 - x1) / dist;
-      const dy = (y2 - y1) / dist;
+  const generatePointsAlongLine = (
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    radius: number = RADIUS
+  ) => {
+    const dist = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    const steps = Math.floor(dist / (2 * metersToDegrees(radius)));
+    const dx = (x2 - x1) / dist;
+    const dy = (y2 - y1) / dist;
 
-      const points = [];
-      for (let i = 0; i <= steps; i++) {
-        points.push([x1 + i * 2 * metersToDegrees(radius) * dx, y1 + i * 2 * metersToDegrees(radius) * dy]);
+    const points = [];
+    for (let i = 0; i <= steps; i++) {
+      points.push([x1 + i * 2 * metersToDegrees(radius) * dx, y1 + i * 2 * metersToDegrees(radius) * dy]);
+    }
+    return points;
+  };
+
+  const getCircleCenters = (reducedCoords: number[][]): number[][] => {
+    const centers: number[][] = [];
+    for (let i = 0; i < reducedCoords.length - 1; i++) {
+      const [x1, y1] = reducedCoords[i];
+      const [x2, y2] = reducedCoords[i + 1];
+      centers.push(...generatePointsAlongLine(x1, y1, x2, y2));
+    }
+    return centers;
+  };
+
+
+  const initializeAutocomplete = () => {
+    if (!originRef.current || !destRef.current || !window.google) return;
+
+    const originAutocomplete = new window.google.maps.places.Autocomplete(originRef.current);
+    const destAutocomplete = new window.google.maps.places.Autocomplete(destRef.current);
+
+    originAutocomplete.addListener("place_changed", () => {
+      const place = originAutocomplete.getPlace();
+      // Add safety checks
+      if (!originRef.current) return;
+
+      if (place && place.geometry) {
+        setOrigin({
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        });
+        // Only try to access value if we're sure the ref exists
+        setOrigin_string(originRef.current.value || "");
       }
-      return points;
-    };
+    });
 
-    const getCircleCenters = (reducedCoords: number[][]): number[][] => {
-      const centers: number[][] = [];
-      for (let i = 0; i < reducedCoords.length - 1; i++) {
-        const [x1, y1] = reducedCoords[i];
-        const [x2, y2] = reducedCoords[i + 1];
-        centers.push(...generatePointsAlongLine(x1, y1, x2, y2));
+    destAutocomplete.addListener("place_changed", () => {
+      const place = destAutocomplete.getPlace();
+      // Add safety checks
+      if (!destRef.current) return;
+
+      if (place && place.geometry) {
+        setDest({
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        });
+        // Only try to access value if we're sure the ref exists
+        setDestination_string(destRef.current.value || "");
       }
-      return centers;
-    };
+    });
 
 
-    const initializeAutocomplete = () => {
-      if (!originRef.current || !destRef.current || !window.google) return;
-  
-      const originAutocomplete = new window.google.maps.places.Autocomplete(originRef.current);
-      const destAutocomplete = new window.google.maps.places.Autocomplete(destRef.current);
-  
-      originAutocomplete.addListener("place_changed", () => {
-        const place = originAutocomplete.getPlace();
-        // Add safety checks
-        if (!originRef.current) return;
-        
-        if (place && place.geometry) {
-          setOrigin({
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-          });
-          // Only try to access value if we're sure the ref exists
-          setOrigin_string(originRef.current.value || "");
-        }
-      });
-  
-      destAutocomplete.addListener("place_changed", () => {
-        const place = destAutocomplete.getPlace();
-        // Add safety checks
-        if (!destRef.current) return;
-
-        if (place && place.geometry) {
-          setDest({
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-          });
-          // Only try to access value if we're sure the ref exists
-          setDestination_string(destRef.current.value || "");
-        }
-      });
-
-
-    };
+  };
 
 
   const triggerSearch = () => {
@@ -553,30 +701,34 @@ function HomeContainer() {
 
   return (
     // <LoadScript googleMapsApiKey={googleMapsAPIKey} libraries={['places', 'geometry']}>
-      <HomeView
-        places={places}
-        setPlaces={setPlaces}
+    <HomeView
+      places={places}
+      setPlaces={setPlaces}
 
-        origin={ORIGIN}
-        dest={DESTINATION}
+      origin={ORIGIN}
+      dest={DESTINATION}
 
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        apiGMapsKey={googleMapsAPIKey}
-        apiGPlaceskey={googleMapsAPIKey}
-        searchRequested={searchRequested}
-        setSearchRequested={setSearchRequested}
-        triggerSearch={triggerSearch}
-        
-        mapRef = {mapRef}
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
+      apiGMapsKey={googleMapsAPIKey}
+      apiGPlaceskey={googleMapsAPIKey}
+      searchRequested={searchRequested}
+      setSearchRequested={setSearchRequested}
+      triggerSearch={triggerSearch}
+      travelMode={travelMode}
+      setTravelMode={setTravelMode}
+      mapRef={mapRef}
 
-        originRef={originRef}
-        destRef={destRef}
-        />
-        
-      );
-    
-    }
+      originRef={originRef}
+      destRef={destRef}
+
+      sortMethod={sortMethod}
+      setSortMethod={setSortMethod}
+    />
+
+  );
+
+}
 
 export default HomeContainer;
 

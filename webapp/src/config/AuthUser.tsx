@@ -27,11 +27,12 @@ export interface UserHistory {
   destination_string: string,
 }
 
+
+
 // Data that has the actual user auth
 interface AuthContextType {
   userData: UserData | null;
   loading: boolean;
-  updateUserData: (newData: UserData) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,10 +40,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-
-  const updateUserData = (newData: UserData) => {
-    setUserData(newData);
-  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -72,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ userData, loading, updateUserData }}>
+    <AuthContext.Provider value={{ userData, loading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -84,6 +81,7 @@ export const useAuth = () => {
   if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };
+
 
 // Update the user data below
 export const updateUserVegetarianStatus = async (userId: string, newStatus: boolean) => {
@@ -97,51 +95,42 @@ export const updateUserVegetarianStatus = async (userId: string, newStatus: bool
   }
 };
 
-// Custom hook for updating user history
-export const useUpdateUserHistory = () => {
-  const { updateUserData } = useAuth();
-  
-  const updateHistory = async (
-    userId: string,
-    origin: { lat: number; lng: number },
-    destination: { lat: number; lng: number },
-    origin_string: string,
-    destination_string: string
-  ) => {
-    try {
-      const userRef = doc(db, "users", userId);
-      const userDoc = await getDoc(userRef);
-      
-      if (!userDoc.exists()) {
-        console.error("User document not found");
-        return false;
-      }
-
-      const userData = userDoc.data() as UserData;
-      const newHistory: UserHistory = {
-        origin,
-        destination,
-        travelMode: "DRIVING", // Hard coded for now
-        origin_string,
-        destination_string
-      };
-
-      // Add new history to the beginning of the array
-      const updatedHistory = [newHistory, ...userData.history];
-      const updatedUserData = { ...userData, history: updatedHistory };
-
-      await updateDoc(userRef, {
-        history: updatedHistory
-      });
-
-      updateUserData(updatedUserData);
-      console.log("Successfully added search to history");
-      return true;
-    } catch (error) {
-      console.error("Error adding search to history:", error);
+export const addSearchToHistory = async (
+  userId: string,
+  origin: { lat: number; lng: number },
+  destination: { lat: number; lng: number },
+  origin_string: string,
+  destination_string: string,
+  travelMode: google.maps.TravelMode
+) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      console.error("User document not found");
       return false;
     }
-  };
 
-  return updateHistory;
+    const userData = userDoc.data() as UserData;
+    const newHistory: UserHistory = {
+      origin,
+      destination,
+      travelMode, // Hard coded for now
+      origin_string,
+      destination_string
+    };
+
+    // Add new history to the beginning of the array
+    const updatedHistory = [newHistory, ...userData.history];
+
+    await updateDoc(userRef, {
+      history: updatedHistory
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error adding search to history:", error);
+    return false;
+  }
 };
