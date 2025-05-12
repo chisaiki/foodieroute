@@ -9,6 +9,8 @@ import {
   RouterProvider,
 } from "react-router-dom";
 
+import './components/styles/global.css';
+
 
 // Pages
 // Basic pages
@@ -17,7 +19,7 @@ import ErrorPagee from './components/views/error-page.jsx'; // We will need to c
 
 
 // Better pages (containers)
-import HomeContainer  from './components/containers/HomeContainer';
+import HomeContainer from './components/containers/HomeContainer';
 import SettingsContainer from './components/containers/SettingsContainer';
 
 
@@ -35,7 +37,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/Settings",
-    element: <SettingsContainer/>
+    element: <SettingsContainer />
   },
   // {
   //   path: "/og",
