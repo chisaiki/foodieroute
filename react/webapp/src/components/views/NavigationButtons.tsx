@@ -13,7 +13,7 @@ export default function NavigationButtons() {
                 to="/"
                 className="text-lg font-semibold text-indigo-600 whitespace-nowrap"
             >
-                FoodRoute
+                BiteRoute
             </Link>
 
             {/* Navigation links aligned to the right */}
