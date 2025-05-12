@@ -215,17 +215,17 @@ function HomeContainer() {
 
       boundsListRef.current.push(bounds);
 
-      const rect = new google.maps.Rectangle({
-        map,
-        bounds,
-        fillColor: "#0000FF",
-        fillOpacity: 0.1,
-        strokeColor: "#0000FF",
-        strokeOpacity: 0.5,
-        strokeWeight: 1,
-      });
+      // const rect = new google.maps.Rectangle({
+      //   map,
+      //   bounds,
+      //   fillColor: "#0000FF",
+      //   fillOpacity: 0.1,
+      //   strokeColor: "#0000FF",
+      //   strokeOpacity: 0.5,
+      //   strokeWeight: 1,
+      // });
 
-      circlesRef.current.push(rect as unknown as google.maps.Circle);
+      // circlesRef.current.push(rect as unknown as google.maps.Circle);
     });
   };
 
@@ -376,20 +376,20 @@ function HomeContainer() {
             const pos = { lat, lng };
             locations.push(pos);
 
-            const m = new google.maps.Marker({
-              position: pos,
-              map,
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                fillColor: "blue",
-                scale: 6,
-              },
-            });
-            markersRef.current.push(m);
+            // const m = new google.maps.Marker({
+            //   position: pos,
+            //   map,
+            //   icon: {
+            //     path: google.maps.SymbolPath.CIRCLE,
+            //     fillColor: "blue",
+            //     scale: 6,
+            //   },
+            // });
+            // markersRef.current.push(m);
           });
 
           // Draw rectangular areas around the midpoints to show search zones
-          //drawSearchRectangles(locations, map);
+          drawSearchRectangles(locations, map);
 
           try {
             // Fetch nearby places and remove duplicates
