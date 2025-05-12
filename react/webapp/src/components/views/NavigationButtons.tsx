@@ -1,70 +1,35 @@
-
+// NavigationButtons – top bar with branding and page links
 
 import { Link } from "react-router-dom";
-import "../styles/temp.css"
-// import PropTypes from "prop-types"; // Import PropTypes
-import {AuthView} from "../../config/auth";
+import { AuthView } from "../../config/auth"; // Displays login/logout widget
 
-export default function NavigationButtons(){
-  
-  return(
-      <div id ="nav-bar " className="temp-nav-bar2">
-          {SingleButton("Home")}
-          <div className="flex justify-between items-center gap-8">
-            <div><AuthView/></div>
-            {SingleButton("Settings & Account")}
-          </div>
+export default function NavigationButtons() {
+    return (
+        // Top header with logo on the left and links on the right
+        <header className="h-14 w-full bg-white shadow flex items-center px-6 justify-between">
 
-          {/* <SingleButton button="Home"/> */}
-          {/* <SingleButton button="Settings"/> */}
-          
-      </div>
-  );
+            {/* App name where clicking it goes to the home page */}
+            <Link
+                to="/"
+                className="text-lg font-semibold text-indigo-600 whitespace-nowrap"
+            >
+                FoodRoute
+            </Link>
+
+            {/* Navigation links aligned to the right */}
+            <nav className="flex items-center gap-8 text-sm font-medium">
+                <Link to="/" className="hover:text-indigo-600">Home</Link>
+                <Link to="/Settings" className="hover:text-indigo-600">Settings</Link>
+                <Link
+                    to="/banana"
+                    className="hover:text-indigo-600 flex items-center gap-1"
+                >
+                    Bananas <span>🍌</span>
+                </Link>
+
+                {/* User account section that shows login/logout */}
+                <AuthView />
+            </nav>
+        </header>
+    );
 }
-
-//function that returns the html code for a button based on the string passed in 
-function SingleButton(button : string){
-  const nameToData = 
-  {
-      'Home' : {
-          text : 'Food Route',
-          link : '/'
-      },
-      'Settings & Account' : { 
-          text : 'Settings & Account',
-          link : '/Settings'
-      },
-  };
-
-  const errorContent = {
-      text : 'N/A',
-      link : '/'
-  }
-  
-  // For group memebers reading this and want to understand the logic
-  //https://stackoverflow.com/questions/55377365/what-does-keyof-typeof-mean-in-typescript
-  const content = nameToData[button as keyof typeof nameToData] || errorContent;
-
-  return(
-      <Link className="nav-button" to={content.link}>
-          {content.text}
-      </Link>
-  );
-}
-
-
-
-// NOTE: alternative way is to define a prop type, 
-// this is the better way to do it but I need to do it the dumb way first
-
-// interface SingleButtonProps {
-//     button: string;
-//   }
-
-// function SingleButton({ button }: SingleButtonProps) { ...}
-
-
-// Prop type was needed for JS
-// SingleButton.propTypes = {
-//     button: PropTypes.string.isRequired,
-//   };

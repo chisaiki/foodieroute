@@ -1,115 +1,120 @@
-import { useEffect, useRef, useState } from "react";
+// SearchBoxView – search form for origin, destination, place query, mode, and sort
+
+import React from "react";
 import "../styles/tailwindStyle.css";
 
-type SearchBoxViewProps = {
-  // setOrigin: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
-  // setDest: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
-  searchQuery: string;
-  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-  triggerSearch: () => void;
-  originRef: React.RefObject<HTMLInputElement | null>;
-  destRef: React.RefObject<HTMLInputElement | null>;
-  travelMode: google.maps.TravelMode;
-  setTravelMode: React.Dispatch<React.SetStateAction<google.maps.TravelMode>>;
-  sortMethod: "Rating" | "Price" | "Count";
-  setSortMethod: React.Dispatch<
-    React.SetStateAction<"Rating" | "Price" | "Count">
-  >;
-};
-
-// const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-declare global {
-  interface Window {
-    google: any;
-  }
-}
-
-export default function SearchBoxView({
-  // setOrigin,
-  // setDest,
-  searchQuery,
-  setSearchQuery,
-  triggerSearch,
-  originRef,
-  destRef,
-  travelMode,
-  setTravelMode,
-  sortMethod,
-  setSortMethod
-}: SearchBoxViewProps) {
-
+// Main form component containing all search controls
+export default function SearchBoxView(
+  props: SearchBoxViewProps & { className?: string }
+) {
+  const { className = "" } = props;
 
   return (
-    <div className="p-2 space-y-3">
-      <div>
-        <label>Origin:</label>
-        <input
-          ref={originRef}
-          type="text"
-          placeholder="Enter starting location"
-          className="border p-1 w-full"
-        />
-      </div>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        props.triggerSearch();
+      }}
+      // Responsive layout: 1 column on mobile, 3 columns on large screens
+      className={`grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 ${className}`}
+    >
+      {/* Input for starting location */}
+      <Input label="Origin" placeholder="Start…" ref={props.originRef} />
 
-      <div>
-        <label>Destination:</label>
-        <input
-          ref={destRef}
-          type="text"
-          placeholder="Enter destination"
-          className="border p-1 w-full"
-        />
-      </div>
+      {/* Input for destination */}
+      <Input label="Destination" placeholder="End…" ref={props.destRef} />
 
-      <div>
-        <label>Search Query (e.g. Pizza):</label>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="border p-1 w-full"
-        />
-      </div>
+      {/* Text input for keyword search (e.g. "pizza") */}
+      <InputText
+        label="Search"
+        value={props.searchQuery}
+        onChange={(v) => props.setSearchQuery(v)}
+        placeholder="e.g. pizza"
+      />
 
-      <div>
-        <label>Mode of Travel:</label>
-        <select
-          value={travelMode}
-          onChange={(e) =>
-            setTravelMode(e.target.value as google.maps.TravelMode)
-          }
-          className="border p-1 w-full"
-        >
-          <option value="DRIVING">Driving</option>
-          <option value="WALKING">Walking</option>
-          <option value="TRANSIT">Public Transit</option>
-          <option value="BICYCLING">Bicycling</option>
-        </select>
-      </div>
+      {/* Dropdown for selecting travel mode */}
+      <Select
+        label="Travel"
+        value={props.travelMode}
+        onChange={(v) => props.setTravelMode(v as google.maps.TravelMode)}
+        options={["DRIVING", "WALKING", "TRANSIT", "BICYCLING"]}
+      />
 
-      <div>
-        <label>Sort places by:</label>
-        <select
-          value={sortMethod}
-          onChange={(e) =>
-            setSortMethod(e.target.value as "Rating" | "Price" | "Count")
-          }
-          className="border p-1 w-full mt-1"
-        >
-          <option value="Rating">Rating</option>
-          <option value="Price">Price Level</option>
-          <option value="Count">Review Count</option>
-        </select>
-      </div>
+      {/* Dropdown for selecting how to sort results */}
+      <Select
+        label="Sort by"
+        value={props.sortMethod}
+        onChange={(v) => props.setSortMethod(v as "Rating" | "Price" | "Count")}
+        options={[
+          ["Rating", "Rating"],
+          ["Price", "Price lvl"],
+          ["Count", "Reviews"],
+        ]}
+      />
 
+      {/* Submit button (spans 2 columns on small screens) */}
       <button
-        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
-        onClick={triggerSearch}
-      //disable={true}
+        type="submit"
+        className="sm:col-span-2 lg:col-span-1 h-10 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition"
       >
         Search
       </button>
-    </div>
+    </form>
+  );
+}
+
+// input component helps render a labeled input field using a forwarded ref (for origin/destination fields)
+const Input = React.forwardRef<
+  HTMLInputElement,
+  { label: string; placeholder: string }
+>((p, ref) => (
+  <label className="text-xs font-medium space-y-1">
+    {p.label}
+    <input
+      ref={ref}
+      placeholder={p.placeholder}
+      className="mt-1 w-full rounded border border-slate-300 p-2"
+    />
+  </label>
+));
+
+// InputText component helps to render a controlled input field that is used for search query input
+function InputText({ label, value, onChange, placeholder }: any) {
+  return (
+    <label className="text-xs font-medium space-y-1">
+      {label}
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="mt-1 w-full rounded border border-slate-300 p-2"
+      />
+    </label>
+  );
+}
+
+// Select component renders a labeled dropdown with either string or [value, label] pairs
+function Select({ label, value, onChange, options }: any) {
+  return (
+    <label className="text-xs font-medium space-y-1">
+      {label}
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded border border-slate-300 p-2"
+      >
+        {options.map((o: any) =>
+          Array.isArray(o) ? (
+            <option key={o[0]} value={o[0]}>
+              {o[1]}
+            </option>
+          ) : (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          )
+        )}
+      </select>
+    </label>
   );
 }

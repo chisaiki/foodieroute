@@ -1,64 +1,86 @@
+// ListView – shows a clickable list of places with optional extra details
 
-import "../styles/tailwindStyle.css"
-import { useEffect, useRef, useState } from "react";
-import { Place } from "../../../types/types";
+import React from "react";
+import { Place, PriceLevel } from "../../../types/types";
 
-
-type ListViewProps = {
-  places: Place[];
-
+// Converts price level enums into readable dollar signs
+const priceLevelMap: Record<PriceLevel, string> = {
+  PRICE_LEVEL_FREE: "$0",
+  PRICE_LEVEL_INEXPENSIVE: "$",
+  PRICE_LEVEL_MODERATE: "$$",
+  PRICE_LEVEL_EXPENSIVE: "$$$",
+  PRICE_LEVEL_VERY_EXPENSIVE: "$$$$",
+  PRICE_LEVEL_UNSPECIFIED: "—",
 };
 
+type ListViewProps = {
+  places?: Place[];
+  selectedPlaceName?: string | null;
+  onSelect?: (name: string | null) => void;
+};
 
-export default function ListView({ 
-  places }
-  :ListViewProps )
+export default function ListView({
+  places = [],
+  selectedPlaceName,
+  onSelect,
+}: ListViewProps) {
+  // If there are no results, show a helpful message
+  if (!places.length) {
+    return (
+      <p className="text-center text-sm text-gray-500 py-2">
+        No places found. Run a search ↑
+      </p>
+    );
+  }
 
-{
+  return (
+    <ul className="space-y-1 p-1">
+      {places.map((p) => {
+        // Fallback name if none provided
+        const name = p.displayName?.text ?? "Unnamed place";
 
-  useEffect(() => {
+        // Check if this place is the one currently selected
+        const isActive = name === selectedPlaceName;
 
-  },[places])
+        return (
+          <li
+            key={name}
+            onClick={() => onSelect?.(isActive ? null : name)}
+            className={`cursor-pointer rounded px-2 py-1
+              ${isActive ? "bg-blue-100 font-semibold" : "hover:bg-gray-100"}
+            `}
+          >
+            {/* Always show the place name */}
+            {name}
 
+            {/* Show more info if this item is selected */}
+            {isActive && (
+              <div className="mt-1 text-xs font-normal text-gray-700 space-y-0.5">
+                {p.formattedAddress && <div>{p.formattedAddress}</div>}
 
-  const renderPlaces = () => {
-    if (places.length === 0) {
-      return <p className="text-gray-500">No places found yet.</p>;
-    }
+                <div className="flex items-center gap-2">
+                  {/* Show rating if available */}
+                  {p.rating !== undefined && (
+                    <span>
+                      ⭐ {p.rating.toFixed(1)}
+                      {p.userRatingCount
+                        ? ` (${p.userRatingCount.toLocaleString()})`
+                        : ""}
+                    </span>
+                  )}
 
-    return places.map((place, index) => (
-      <div
-        key={index}
-        className="border rounded-lg p-3 shadow hover:shadow-md transition"
-      >
-        <h3 className="text-lg font-semibold">
-          {place.displayName?.text ?? "Unnamed Place"}
-        </h3>
-        <p className="text-sm text-gray-700">
-           {place.formattedAddress ?? "Address not available"}
-        </p>
-        <p className="text-sm">
-           {place.rating ?? "N/A"} | {" "}
-          {place.priceLevel
-            .replace("PRICE_LEVEL_", "")
-            .toLowerCase()
-            .replace("_", " ")}
-        </p>
-      </div>
-    ));
-  };
-
-  return(
-  <div>
-
-    <div> Restaurant List Here</div>
-    
-    {/* THIS DIV BELOW */}
-    <div className="overflow-auto max-h-[calc(100vh-90px)]"> 
-      {renderPlaces()}
-      </div>
-
-  </div>
-
-);
+                  {/* Show price level if available */}
+                  {p.priceLevel && (
+                    <span className="pl-2 border-l border-gray-300">
+                      {priceLevelMap[p.priceLevel]}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
 }

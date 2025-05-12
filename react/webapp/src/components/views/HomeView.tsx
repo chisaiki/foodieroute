@@ -1,27 +1,28 @@
+/* HomeView – main layout with navigation bar, sidebar, map, and search controls */
+
+import React, { useState } from "react";
+
 import NavigationButtons from "./NavigationButtons";
 import ListView from "./List";
-import MapErrorView from "./MapError";
 import MapView from "./MapView";
 import SearchBoxView from "./SearchBoxView";
 
 import { Place } from "../../../types/types";
 
-import "../styles/tailwindStyle.css"
+import "../styles/tailwindStyle.css";
 
 type HomeViewProps = {
   places: Place[];
   setPlaces: React.Dispatch<React.SetStateAction<Place[]>>;
+
   origin: { lat: number; lng: number };
-  // setOrigin: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
   dest: { lat: number; lng: number };
-  // setDest: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
+
   searchQuery: string;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
 
-
   apiGMapsKey: string;
   apiGPlaceskey: string;
-
 
   searchRequested: boolean;
   setSearchRequested: React.Dispatch<React.SetStateAction<boolean>>;
@@ -32,95 +33,79 @@ type HomeViewProps = {
   originRef: React.RefObject<HTMLInputElement | null>;
   destRef: React.RefObject<HTMLInputElement | null>;
 
-
-  /** the selected mode and setter from parent */
   travelMode: google.maps.TravelMode;
   setTravelMode: React.Dispatch<
     React.SetStateAction<google.maps.TravelMode>
   >;
 
-  /* ★ NEW — sorting */
   sortMethod: "Rating" | "Price" | "Count";
   setSortMethod: React.Dispatch<
     React.SetStateAction<"Rating" | "Price" | "Count">
   >;
 
+  selectedPlaceName: string | null;
+  setSelectedPlaceName: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 export default function HomeView({
-  places, setPlaces,
-  origin, //setOrigin, 
-  dest, //setDest,
-  searchQuery, setSearchQuery,
-  apiGMapsKey,
-  apiGPlaceskey,
-
-  searchRequested,
-  setSearchRequested,
+  places,
+  searchQuery,
+  setSearchQuery,
   triggerSearch,
-
   mapRef,
   originRef,
   destRef,
-
   travelMode,
   setTravelMode,
-
   sortMethod,
   setSortMethod,
-
+  selectedPlaceName,
+  setSelectedPlaceName,
 }: HomeViewProps) {
-
-  //future plans
-  //const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
   return (
-    <div>
-      <div className="temp-nav-bar">
-        <NavigationButtons></NavigationButtons>
-      </div>
-      <div className="maingridwraper">
+    // Use flex layout to stack navigation on top of main content
+    <div className="flex flex-col h-screen">
 
-        <div className="maingrid">
-          <div className="mainGridOne">
-            <ListView places={places}></ListView>
-          </div>
-          <div className="mainGridTwo">
-            <MapView mapRef={mapRef} ></MapView>
+      {/* Navigation bar at the top */}
+      <NavigationButtons />
 
-            {/* <MapView
-            mapsapiKey={apiGMapsKey}
-            placesAPIKey={apiGPlaceskey}
-            origin={origin}
-            dest={dest}
+      {/* Main area is a two-column grid: sidebar + map */}
+      <div className="grid flex-1 lg:grid-cols-[300px_1fr]">
+
+        {/* Left column: list of search results */}
+        <aside className="bg-pink-200 overflow-y-auto">
+          <ListView
+            places={places}
+            selectedPlaceName={selectedPlaceName}
+            // Clicking the same item again will deselect it
+            onSelect={(name) =>
+              setSelectedPlaceName((prev) => (prev === name ? null : name))
+            }
+          />
+        </aside>
+
+        {/* Right column: map and search controls */}
+        <section className="flex flex-col">
+          <MapView mapRef={mapRef} selectedPlaceName={selectedPlaceName} />
+
+          <SearchBoxView
             searchQuery={searchQuery}
-            setPlaces={setPlaces}
-            searchRequested={searchRequested}
-            setSearchRequested={setSearchRequested}>
-          </MapView> */}
+            setSearchQuery={setSearchQuery}
+            triggerSearch={triggerSearch}
+            originRef={originRef}
+            destRef={destRef}
+            travelMode={travelMode}
+            setTravelMode={setTravelMode}
+            sortMethod={sortMethod}
+            setSortMethod={setSortMethod}
+            className="bg-indigo-50 p-4"
 
-            {/* <MapErrorView></MapErrorView> */}
-          </div>
-          <div className="mainGridThree">
-            <SearchBoxView
-              // setOrigin={setOrigin}
-              // setDest={setDest}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              triggerSearch={triggerSearch}
-              originRef={originRef}
-              destRef={destRef}
-              travelMode={travelMode}
-              setTravelMode={setTravelMode}
-              sortMethod={sortMethod}
-              setSortMethod={setSortMethod}
-            />
-          </div>
-
-        </div>
+            // Keeps track of the selected place so map/list can highlight it
+            selectedPlaceName={selectedPlaceName}
+            setSelectedPlaceName={setSelectedPlaceName}
+          />
+        </section>
       </div>
-
     </div>
-
   );
 }
