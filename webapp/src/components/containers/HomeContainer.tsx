@@ -102,7 +102,7 @@ function HomeContainer() {
     scale: 10,
     fillColor: "#2563eb",
     fillOpacity: 1,
-    strokeColor: "#ffffff",
+    strokeColor: "#ffffff", //black?
     strokeWeight: 2,
   });
 
@@ -389,7 +389,7 @@ function HomeContainer() {
           });
 
           // Draw rectangular areas around the midpoints to show search zones
-          drawSearchRectangles(locations, map);
+          //drawSearchRectangles(locations, map);
 
           try {
             // Fetch nearby places and remove duplicates
@@ -399,47 +399,54 @@ function HomeContainer() {
 
             // Place markers and InfoWindows for each result
             finalPlaces.forEach((place) => {
-              if (!place.location) return;
+                if (!place.location) return;
 
-              const marker = new google.maps.Marker({
-                position: {
-                  lat: place.location.latitude,
-                  lng: place.location.longitude,
-                },
-                map,
-                title: place.displayName?.text || 'Unnamed Place',
-                icon: defaultMarkerIcon(),
-              });
+                const marker = new google.maps.Marker({
+                  position: {
+                    lat: place.location.latitude,
+                    lng: place.location.longitude,
+                  },
+                  map,
+                  title: place.displayName?.text || 'Unnamed Place',
+                  icon: defaultMarkerIcon(),
+                });
 
-              if (place.displayName?.text) {
-                placeMarkersRef.current[place.displayName.text] = marker;
-              }
-              markersRef.current.push(marker);
-
-              const firstPhoto = place.photos?.[0];
-              const photoUrl = firstPhoto?.name
-                ? `https://places.googleapis.com/v1/${firstPhoto.name}/media?maxWidthPx=400&key=${googleMapsAPIKey}`
-                : null;
-
-              const infoWindow = new google.maps.InfoWindow({
-                content: `
-                <div style="max-width:300px;">
-                  <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
-                ${photoUrl
-                    ? `<img src="${photoUrl}" style="max-width:250px; max-height:150px; object-fit:cover; border-radius:4px;" />` : '<p>No photo available.</p>'}
-                  <p>${place.formattedAddress || ''}</p>
-                </div>`,
-              });
-
-              // When the marker is clicked, show the place info
-              marker.addListener("click", () => {
-                if (activeInfoWindowRef.current) {
-                  activeInfoWindowRef.current.close();
+                if (place.displayName?.text) {
+                  placeMarkersRef.current[place.displayName.text] = marker;
                 }
-                infoWindow.open(map, marker);
-                activeInfoWindowRef.current = infoWindow;
+                markersRef.current.push(marker);
+
+                const infoWindow = new google.maps.InfoWindow({
+                  content: `<div style="max-width:300px;"><p>Loading...</p></div>`,
+                });
+
+                // When the marker is clicked, fetch photo and show updated info
+                marker.addListener("click", async () => {
+                  if (activeInfoWindowRef.current) {
+                    activeInfoWindowRef.current.close();
+                  }
+
+                  let photoHtml = '<p>No photo available.</p>';
+                  const firstPhoto = place.photos?.[0];
+
+                  if (firstPhoto?.name) {
+                    const photoUrl = `https://places.googleapis.com/v1/${firstPhoto.name}/media?maxWidthPx=400&key=${googleMapsAPIKey}`;
+                    photoHtml = `<img src="${photoUrl}" style="max-width:250px; max-height:150px; object-fit:cover; border-radius:4px;" />`;
+                  }
+
+                  const content = `
+                    <div style="max-width:300px;">
+                      <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
+                      ${photoHtml}
+                      <p>${place.formattedAddress || ''}</p>
+                    </div>`;
+
+                  infoWindow.setContent(content);
+                  infoWindow.open(map, marker);
+                  activeInfoWindowRef.current = infoWindow;
+                });
               });
-            });
+
 
             // Save this search to user history if signed in
             if (userData?.uid) {
