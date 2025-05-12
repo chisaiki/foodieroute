@@ -1,11 +1,32 @@
 @import "tailwindcss";
 
+/* Minimal darker custom scrollbar for Chrome */
+aside::-webkit-scrollbar {
+  width: 8px;
+}
+
+aside::-webkit-scrollbar-thumb {
+  background-color: #888;
+  /* darker gray */
+  border-radius: 4px;
+}
+
+aside::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+  /* even darker on hover */
+}
+
+aside::-webkit-scrollbar-track {
+  background-color: #eee;
+  /* light gray track */
+}
 
 /* Not sure if we should have one css file or multiple tbh */
 
-.maingridwraper{
-  height: 100%; /* Ensure full height is available */
-  margin: 0; 
+.maingridwraper {
+  height: 100%;
+  /* Ensure full height is available */
+  margin: 0;
   /* border: 5px solid red; */
   /* display: flex;
   flex-direction: column; */
@@ -27,7 +48,7 @@
   grid-template-areas:
     "one two"
     "one three"
-  
+
 }
 
 .mainGridOne {
@@ -46,7 +67,7 @@
 .mainGridThree {
   background: rgba(0, 0, 255, 0.354);
   grid-area: three;
-  min-height:  300px;
+  min-height: 300px;
 }
 
 
@@ -58,4 +79,3 @@
   display: flex;
   justify-content: center;
 }
-
