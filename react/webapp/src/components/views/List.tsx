@@ -28,7 +28,7 @@ export default function ListView({
   if (!places.length) {
     return (
       <p className="text-center text-sm text-gray-500 py-2">
-        No places found. Run a search ↑
+        No places found. Run a search 😎
       </p>
     );
   }
