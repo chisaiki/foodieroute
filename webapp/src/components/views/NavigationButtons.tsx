@@ -18,14 +18,13 @@ export default function NavigationButtons() {
 
             {/* Navigation links aligned to the right */}
             <nav className="flex items-center gap-8 text-sm font-medium">
-                <Link to="/" className="hover:text-indigo-600">Home</Link>
-                <Link to="/Settings" className="hover:text-indigo-600">Settings</Link>
-                <Link
+                <Link to="/Settings" className="hover:text-indigo-600">History</Link>
+                {/* <Link
                     to="/banana"
                     className="hover:text-indigo-600 flex items-center gap-1"
                 >
                     Bananas <span>🍌</span>
-                </Link>
+                </Link> */}
 
                 {/* User account section that shows login/logout */}
                 <AuthView />

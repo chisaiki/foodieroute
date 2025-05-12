@@ -52,25 +52,59 @@ aside::-webkit-scrollbar-track {
 }
 
 .mainGridOne {
-  background: rgba(255, 0, 0, 0.352);
+  /* background: rgba(255, 0, 0, 0.352); */
   grid-area: one;
   min-width: 400px;
 }
 
 .mainGridTwo {
-  background: rgba(0, 128, 0, 0.357);
+  /* background: rgba(0, 128, 0, 0.357); */
   grid-area: two;
   height: 100%;
   min-height: 100%;
 }
 
 .mainGridThree {
-  background: rgba(0, 0, 255, 0.354);
+  /* background: rgba(0, 0, 255, 0.354); */
   grid-area: three;
   min-height: 300px;
 }
 
+/* Desktop Layout */
+.maingrid {
+  width: 100%;
+  height: calc(100vh - 60px) !important;
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "one two"
+    "one three";
+}
 
+.map-view {
+  height: 100%;
+  width: 100%;
+}
+
+/* Mobile Layout */
+@media (max-width: 800px) {
+  .maingrid {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto auto;
+    grid-template-areas:
+      "two"
+      "three"
+      "one";
+  }
+
+
+
+  /* Adjust map height for mobile */
+  .mobile-view {
+    height: 50vh !important;
+  }
+}
 
 /* banana page for fun  */
 
