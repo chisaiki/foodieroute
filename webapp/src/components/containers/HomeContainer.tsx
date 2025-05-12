@@ -276,6 +276,13 @@ function HomeContainer() {
       },
       async (response: any, status: any) => {
         if (status === google.maps.DirectionsStatus.OK) {
+          const distanceInMeters = response.routes[0]?.legs[0]?.distance?.value || 0;
+          const distanceInMiles = distanceInMeters / 1609.34;
+
+          if (distanceInMiles > 3) {
+            alert("The selected route is over 3 miles.");
+            return; // Stop further execution
+          }
           // For driving, walking, or biking, just show the route as-is
           if (travelMode !== "TRANSIT") {
             directionsRenderer.setDirections(response);
@@ -459,10 +466,11 @@ function HomeContainer() {
                   let photoHtml = '<p>No photo available.</p>';
                   const firstPhoto = place.photos?.[0];
 
-                  if (firstPhoto?.name) {
-                    const photoUrl = `https://places.googleapis.com/v1/${firstPhoto.name}/media?maxWidthPx=400&key=${googleMapsAPIKey}`;
-                    photoHtml = `<img src="${photoUrl}" style="max-width:250px; max-height:150px; object-fit:cover; border-radius:4px;" />`;
-                  }
+                  //photo API call
+                  // if (firstPhoto?.name) {
+                  //   const photoUrl = `https://places.googleapis.com/v1/${firstPhoto.name}/media?maxWidthPx=400&key=${googleMapsAPIKey}`;
+                  //   photoHtml = `<img src="${photoUrl}" style="max-width:250px; max-height:150px; object-fit:cover; border-radius:4px;" />`;
+                  // }
 
                   const content = `
                     <div style="max-width:300px;">
