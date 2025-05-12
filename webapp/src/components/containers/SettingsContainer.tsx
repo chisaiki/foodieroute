@@ -4,8 +4,7 @@ import { useAuth } from "../../config/AuthUser";
 import { updateUserVegetarianStatus } from '../../config/AuthUser';
 
 function SettingsContainer() {
-  
-  const { userData } = useAuth();
+  const { userData, updateUserData } = useAuth();
   console.log("printing frontend user data ",userData); // 
   const [isVegi, setIsVegi] = useState<boolean>(userData?.vegetarian ?? false); // Tracking state
 
@@ -16,9 +15,7 @@ function SettingsContainer() {
     }
   }, [userData])
 
-
   const userId = userData?.uid ?? ""; 
-
 
   const toggleVegetarian = async () => {
     console.log("Toggling Vegi");
@@ -27,17 +24,21 @@ function SettingsContainer() {
 
     const success = await updateUserVegetarianStatus(userId, !isVegi);
     if (success) {
-      setIsVegi(!isVegi); 
+      setIsVegi(!isVegi);
+      // Update the frontend userData
+      if (userData) {
+        updateUserData({ ...userData, vegetarian: !isVegi });
+      }
     }
   };
 
-
-
-
-    return (
-      <SettingsView veg = {isVegi}  toggleVeg={toggleVegetarian} history={userData?.history ?? []} />
-    );
-
+  return (
+    <SettingsView 
+      veg={isVegi}  
+      toggleVeg={toggleVegetarian} 
+      history={userData?.history ?? []} 
+    />
+  );
 }
 
 export default SettingsContainer;
