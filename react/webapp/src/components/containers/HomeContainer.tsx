@@ -80,16 +80,31 @@ function HomeContainer() {
   const startMarkerRef = useRef<google.maps.Marker | null>(null);
   const endMarkerRef = useRef<google.maps.Marker | null>(null);
 
-
   // just under the other useState hooks
   const [travelMode, setTravelMode] = useState<google.maps.TravelMode>(
     "DRIVING" as google.maps.TravelMode
   );
-  /* ★─────────────────────────────────────────────────────────────★
-   Highlight a map-marker whenever the matching list-item is
-   clicked, and close the InfoWindow if user clicks the same item
-   a second time.
-★───────────────────────────────────────────────────────────────★ */
+
+  //helper function for marker display when not selected
+  const defaultMarkerIcon = (): google.maps.Symbol => ({
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: 6,
+    fillColor: "red",
+    fillOpacity: 1,
+    strokeColor: "#ffffff",
+    strokeWeight: 1,
+  });
+
+  //helper function for marker display when selected
+  const selectedMarkerIcon = (): google.maps.Symbol => ({
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: 10,
+    fillColor: "#2563eb",
+    fillOpacity: 1,
+    strokeColor: "#ffffff",
+    strokeWeight: 2,
+  });
+
 
   // Name of the currently selected place from the sidebar
   const [selectedPlaceName, setSelectedPlaceName] = useState<string | null>(null);
@@ -97,45 +112,29 @@ function HomeContainer() {
   // Store all markers by place name for later reference
   const placeMarkersRef = useRef<Record<string, google.maps.Marker>>({});
 
-  // Watch for changes in selected place and update map marker appearance
   useEffect(() => {
-    //make sure the Maps SDK is loaded first
     if (typeof google === "undefined" || !google.maps) return;
 
     // Reset all markers to default style
-    Object.values(placeMarkersRef.current).forEach((m) => {
-      m.setIcon({
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 6,
-        fillColor: "red",
-        fillOpacity: 1,
-        strokeColor: "#ffffff",
-        strokeWeight: 1,
-      });
-      m.setZIndex(undefined);
+    Object.values(placeMarkersRef.current).forEach((marker) => {
+      marker.setIcon(defaultMarkerIcon());
+      marker.setZIndex(undefined);
     });
 
-    // Close InfoWindow if no place is selected
     if (!selectedPlaceName) {
       activeInfoWindowRef.current?.close();
       return;
     }
 
-    // Highlight selected marker and show its InfoWindow
     const marker = placeMarkersRef.current[selectedPlaceName];
     if (marker) {
-      marker.setIcon({
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 10,
-        fillColor: "#2563eb",
-        fillOpacity: 1,
-        strokeColor: "#ffffff",
-        strokeWeight: 2,
-      });
-      marker.setZIndex(9_999);
-      google.maps.event.trigger(marker, "click"); // opens the window
+      marker.setIcon(selectedMarkerIcon());
+      marker.setZIndex(9999);
+      google.maps.event.trigger(marker, "click"); // open its InfoWindow
     }
   }, [selectedPlaceName]);
+
+
 
   // the default search radius in meters and also the coordinate reduction const
   const RADIUS = 200;
@@ -400,6 +399,7 @@ function HomeContainer() {
                 },
                 map,
                 title: place.displayName?.text || 'Unnamed Place',
+                icon: defaultMarkerIcon(),
               });
 
               if (place.displayName?.text) {
@@ -416,9 +416,8 @@ function HomeContainer() {
                 content: `
                 <div style="max-width:300px;">
                   <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
-                  ${photoUrl
-                    ? `<img src="${photoUrl}" style="width:100%;height:auto" />`
-                    : '<p>No photo available.</p>'}
+                ${photoUrl
+                    ? `<img src="${photoUrl}" style="max-width:250px; max-height:150px; object-fit:cover; border-radius:4px;" />` : '<p>No photo available.</p>'}
                   <p>${place.formattedAddress || ''}</p>
                 </div>`,
               });
