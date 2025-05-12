@@ -73,7 +73,7 @@ export default function HomeView({
       <div className="grid flex-1 lg:grid-cols-[300px_1fr]">
 
         {/* Left column: list of search results */}
-        <aside className="bg-pink-200 overflow-y-auto">
+        <aside className="bg-pink-200 overflow-y-auto max-h-screen">
           <ListView
             places={places}
             selectedPlaceName={selectedPlaceName}
