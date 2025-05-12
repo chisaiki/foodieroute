@@ -88,22 +88,22 @@ function HomeContainer() {
 
   //helper function for marker display when not selected
   const defaultMarkerIcon = (): google.maps.Symbol => ({
-    path: google.maps.SymbolPath.CIRCLE,
-    scale: 6,
-    fillColor: "red",
-    fillOpacity: 1,
-    strokeColor: "#ffffff",
-    strokeWeight: 1,
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 8, // Slightly larger
+      fillColor: "#4285F4", // Google blue
+      fillOpacity: 1,
+      strokeColor: "#ffffff", // White outline
+      strokeWeight: 2, // Thicker border
   });
 
   //helper function for marker display when selected
   const selectedMarkerIcon = (): google.maps.Symbol => ({
-    path: google.maps.SymbolPath.CIRCLE,
-    scale: 10,
-    fillColor: "#2563eb",
-    fillOpacity: 1,
-    strokeColor: "#ffffff", //black?
-    strokeWeight: 2,
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 10, // Larger circle
+      fillColor: "#DB4437", // Google red
+      fillOpacity: 1,
+      strokeColor: "#ffffff", // White outline
+      strokeWeight: 3, // Thicker border
   });
 
   // Name of the currently selected place from the sidebar
@@ -437,11 +437,24 @@ function HomeContainer() {
                   content: `<div style="max-width:300px;"><p>Loading...</p></div>`,
                 });
 
+
                 // When the marker is clicked, fetch photo and show updated info
+                let selectedMarker: google.maps.Marker | null = null;
+
                 marker.addListener("click", async () => {
                   if (activeInfoWindowRef.current) {
                     activeInfoWindowRef.current.close();
                   }
+
+                Object.values(placeMarkersRef.current).forEach((m) => {
+                    m.setIcon(defaultMarkerIcon());
+                    m.setZIndex(undefined);
+                });
+
+                // Highlight the clicked marker
+                marker.setIcon(selectedMarkerIcon());
+                marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
+                selectedMarker = marker;
 
                   let photoHtml = '<p>No photo available.</p>';
                   const firstPhoto = place.photos?.[0];
