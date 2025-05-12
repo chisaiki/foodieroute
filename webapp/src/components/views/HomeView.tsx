@@ -1,6 +1,6 @@
 /* HomeView – main layout with navigation bar, sidebar, map, and search controls */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import NavigationButtons from "./NavigationButtons";
 import ListView from "./List";
@@ -62,32 +62,76 @@ export default function HomeView({
   selectedPlaceName,
   setSelectedPlaceName,
 }: HomeViewProps) {
-  return (
-    // Use flex layout to stack navigation on top of main content
-    <div className="flex flex-col h-screen">
 
-      {/* Navigation bar at the top */}
-      <NavigationButtons />
 
-      {/* Main area is a two-column grid: sidebar + map */}
-      <div className="grid flex-1 lg:grid-cols-[300px_1fr]">
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-        {/* Left column: list of search results */}
-        <aside className="bg-pink-200 overflow-y-auto max-h-screen">
-          <ListView
-            places={places}
-            selectedPlaceName={selectedPlaceName}
-            // Clicking the same item again will deselect it
-            onSelect={(name) =>
-              setSelectedPlaceName((prev) => (prev === name ? null : name))
-            }
-          />
-        </aside>
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
 
-        {/* Right column: map and search controls */}
-        <section className="flex flex-col">
-          <MapView mapRef={mapRef} selectedPlaceName={selectedPlaceName} />
+    window.addEventListener('resize', handleResize);
 
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  if (windowWidth <= 800) {
+    return (
+      <div>
+      <div className="temp-nav-bar">
+          <NavigationButtons></NavigationButtons>
+      </div>
+      <div className="maingridwraper">
+  
+        <div className="maingrid"> 
+            <div className="mainGridTwo mobile-view">
+              <MapView mapRef={mapRef} ></MapView>
+            </div>
+
+            <div className="mainGridThree">
+              <SearchBoxView
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                triggerSearch={triggerSearch}
+                originRef={originRef}
+                destRef={destRef}
+                travelMode={travelMode}
+                setTravelMode={setTravelMode}
+                sortMethod={sortMethod}
+                setSortMethod={setSortMethod}
+                className="bg-indigo-50 p-4"
+                selectedPlaceName={selectedPlaceName}
+                setSelectedPlaceName={setSelectedPlaceName}
+              />
+            </div>
+
+            <div className="mainGridOne">
+              <ListView places={places}></ListView>
+            </div>
+        </div>
+      </div>
+    </div>
+    );
+  } else {
+    return (
+      <div>
+      <div className="temp-nav-bar">
+          <NavigationButtons></NavigationButtons>
+      </div>
+      <div className="maingridwraper">
+  
+        <div className="maingrid"> 
+          <div className="mainGridOne">
+            <ListView places={places}></ListView>
+          </div>
+          <div className="mainGridTwo">
+            <MapView mapRef={mapRef} ></MapView>
+
+          </div>
+          <div className="mainGridThree">
           <SearchBoxView
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
@@ -103,9 +147,16 @@ export default function HomeView({
             // Keeps track of the selected place so map/list can highlight it
             selectedPlaceName={selectedPlaceName}
             setSelectedPlaceName={setSelectedPlaceName}
-          />
-        </section>
+            />
+            
+          </div>
+  
+        </div>
       </div>
+  
     </div>
-  );
+    );
+  }
+
+
 }
