@@ -2,7 +2,8 @@ import HomeView from "../views/HomeView";
 import { useEffect, useRef, useState } from "react";
 import { Place, PriceLevel } from "../../../types/types";
 import { decodePlaces } from "../../../types/decoders";
-import { useAuth, addSearchToHistory } from '../../config/AuthUser';
+import { useAuth, useUpdateHistory } from '../../config/AuthUser';
+import { useLocation } from 'react-router-dom';
 
 // Declare global Google Maps interface used by script loader
 declare global {
@@ -22,6 +23,8 @@ function HomeContainer() {
 
   // Get current user data from authentication context
   const { userData } = useAuth();
+  const updateHistory = useUpdateHistory();
+  const location = useLocation();
 
   // Current sorting method for results
   const [sortMethod, setSortMethod] = useState<"Rating" | "Price" | "Count">("Rating");
@@ -48,13 +51,11 @@ function HomeContainer() {
   const [origin_string, setOrigin_string] = useState<string>("");
   const [destination_string, setDestination_string] = useState<string>("");
 
-  // Keyword for the type of place to search (e.g. “Pizza”, “Bakery”)
+  // Keyword for the type of place to search (e.g. "Pizza", "Bakery")
   const [searchQuery, setSearchQuery] = useState<string>("Pizza");
 
   // Whether the user has clicked the search button
   const [searchRequested, setSearchRequested] = useState(false);
-
-
 
   ///
   /// THE GOOGLE MAP LOGIC START 
@@ -85,7 +86,6 @@ function HomeContainer() {
     "DRIVING" as google.maps.TravelMode
   );
 
-
   //helper function for marker display when not selected
   const defaultMarkerIcon = (): google.maps.Symbol => ({
     path: google.maps.SymbolPath.CIRCLE,
@@ -105,7 +105,6 @@ function HomeContainer() {
     strokeColor: "#ffffff",
     strokeWeight: 2,
   });
-
 
   // Name of the currently selected place from the sidebar
   const [selectedPlaceName, setSelectedPlaceName] = useState<string | null>(null);
@@ -134,8 +133,6 @@ function HomeContainer() {
       google.maps.event.trigger(marker, "click"); // open its InfoWindow
     }
   }, [selectedPlaceName]);
-
-
 
   // the default search radius in meters and also the coordinate reduction const
   const RADIUS = 200;
@@ -231,6 +228,7 @@ function HomeContainer() {
 
   // essentially just handles map clearing, route fetching, marker drawing, and place display
   const searchRoute = (map: google.maps.Map) => {
+    console.log("searchRoute called");
     // Clear previously stored place markers
     placeMarkersRef.current = {};
 
@@ -391,6 +389,25 @@ function HomeContainer() {
           // Draw rectangular areas around the midpoints to show search zones
           drawSearchRectangles(locations, map);
 
+          // Save this search to user history if signed in
+          if (userData?.uid && origin_string !== "" && destination_string !== "") {
+            const success = await updateHistory(
+              userData.uid,
+              ORIGIN,
+              DESTINATION,
+              origin_string,
+              destination_string,
+              travelMode
+            );
+            if (success) {
+              console.log("Successfully saved search to history");
+            } else {
+              console.log("Failed to save search to history");
+            }
+          } else {
+            console.log("No user data found");
+          }
+          
           try {
             // Fetch nearby places and remove duplicates
             const finalPlaces = await getSortedAndUniquePlaces(locations, map);
@@ -441,19 +458,8 @@ function HomeContainer() {
               });
             });
 
-            // Save this search to user history if signed in
-            if (userData?.uid) {
-              await addSearchToHistory(
-                userData.uid,
-                ORIGIN,
-                DESTINATION,
-                origin_string,
-                destination_string,
-                travelMode
-              );
-            }
           } catch (err) {
-            console.error("Error processing places or saving history:", err);
+            console.error("Error processing places ", err);
           }
         } else {
           console.error("Error with Directions API:", status);

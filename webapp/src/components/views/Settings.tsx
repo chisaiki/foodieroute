@@ -26,7 +26,7 @@ export default function SettingsView({ veg, toggleVeg, history } : SettingsViewP
 
         <div className="flex flex-col items-start justify-around w-full">
           <h1 className="text-xl font-semibold mb-2">History</h1>
-          <div className="overflow-y-auto max-h-[300px] space-y-2 w-full">
+          <div className="overflow-y-auto max-h-full  space-y-2 w-full">
             {history.map((item: UserHistory, index: number) => (
               <div key={index} className="border p-2 rounded shadow-sm">
                 <p className="text-sm font-medium">From: {item.origin_string}</p>

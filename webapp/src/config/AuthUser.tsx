@@ -33,6 +33,7 @@ export interface UserHistory {
 interface AuthContextType {
   userData: UserData | null;
   loading: boolean;
+  updateUserData: (updatedUserData: UserData) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -68,8 +69,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
+  const updateUserData = (updatedUserData: UserData) => {
+    setUserData(updatedUserData);
+  };
+
   return (
-    <AuthContext.Provider value={{ userData, loading }}>
+    <AuthContext.Provider value={{ userData, loading, updateUserData }}>
       {children}
     </AuthContext.Provider>
   );
@@ -95,42 +100,65 @@ export const updateUserVegetarianStatus = async (userId: string, newStatus: bool
   }
 };
 
-export const addSearchToHistory = async (
-  userId: string,
-  origin: { lat: number; lng: number },
-  destination: { lat: number; lng: number },
-  origin_string: string,
-  destination_string: string,
-  travelMode: google.maps.TravelMode
-) => {
-  try {
-    const userRef = doc(db, "users", userId);
-    const userDoc = await getDoc(userRef);
-    
-    if (!userDoc.exists()) {
-      console.error("User document not found");
+// Custom hook for updating user history
+export const useUpdateHistory = () => {
+  const { updateUserData } = useAuth();
+  
+  const updateHistory = async (
+    userId: string,
+    origin: { lat: number; lng: number },
+    destination: { lat: number; lng: number },
+    origin_string: string,
+    destination_string: string,
+    travelMode: string
+  ) => {
+    try {
+      const userRef = doc(db, "users", userId);
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        console.error("User document not found");
+        return false;
+      }
+
+      const userData = userDoc.data() as UserData;
+      
+      // Check if this search already exists in history
+      const isDuplicate = userData.history.some(item => 
+        item.origin_string === origin_string && 
+        item.destination_string === destination_string
+      );
+
+      if (isDuplicate) {
+        console.log("Search already exists in history, skipping...");
+        return true;
+      }
+
+      const newHistory: UserHistory = {
+        origin,
+        destination,
+        travelMode,
+        origin_string,
+        destination_string
+      };
+
+      // Add new history to the beginning of the array
+      const updatedHistory = [newHistory, ...userData.history];
+      const updatedUserData = { ...userData, history: updatedHistory };
+
+      await updateDoc(userRef, {
+        history: updatedHistory
+      });
+
+      // Update the frontend state
+      updateUserData(updatedUserData);
+      console.log("Successfully added search to history");
+      return true;
+    } catch (error) {
+      console.error("Error adding search to history:", error);
       return false;
     }
+  };
 
-    const userData = userDoc.data() as UserData;
-    const newHistory: UserHistory = {
-      origin,
-      destination,
-      travelMode, // Hard coded for now
-      origin_string,
-      destination_string
-    };
-
-    // Add new history to the beginning of the array
-    const updatedHistory = [newHistory, ...userData.history];
-
-    await updateDoc(userRef, {
-      history: updatedHistory
-    });
-
-    return true;
-  } catch (error) {
-    console.error("Error adding search to history:", error);
-    return false;
-  }
+  return updateHistory;
 };
