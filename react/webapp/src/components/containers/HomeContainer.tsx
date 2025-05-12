@@ -79,11 +79,12 @@ function HomeContainer() {
   const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
   const startMarkerRef = useRef<google.maps.Marker | null>(null);
   const endMarkerRef = useRef<google.maps.Marker | null>(null);
-
+  const boundsListRef = useRef<google.maps.LatLngBoundsLiteral[]>([]);
   // just under the other useState hooks
   const [travelMode, setTravelMode] = useState<google.maps.TravelMode>(
     "DRIVING" as google.maps.TravelMode
   );
+
 
   //helper function for marker display when not selected
   const defaultMarkerIcon = (): google.maps.Symbol => ({
@@ -197,21 +198,26 @@ function HomeContainer() {
     map: google.maps.Map
   ) => {
     const LAT_METERS = 111_320;
-    const RADIUS_M = RADIUS; // uses existing constant
+    const RADIUS_M = travelMode === "WALKING" ? 100 : RADIUS; // uses existing constant
+
+    boundsListRef.current = []; //clear previous
 
     locs.forEach(({ lat, lng }) => {
       const latDelta = RADIUS_M / LAT_METERS;
-      const lonDelta =
-        RADIUS_M / (LAT_METERS * Math.cos(lat * (Math.PI / 180)));
+      const lonDelta = RADIUS_M / (LAT_METERS * Math.cos(lat * (Math.PI / 180)));
+
+      const bounds: google.maps.LatLngBoundsLiteral = {
+        north: lat + latDelta,
+        south: lat - latDelta,
+        east: lng + lonDelta,
+        west: lng - lonDelta,
+      };
+
+      boundsListRef.current.push(bounds);
 
       const rect = new google.maps.Rectangle({
         map,
-        bounds: {
-          north: lat + latDelta,
-          south: lat - latDelta,
-          east: lng + lonDelta,
-          west: lng - lonDelta,
-        },
+        bounds,
         fillColor: "#0000FF",
         fillOpacity: 0.1,
         strokeColor: "#0000FF",
@@ -358,8 +364,11 @@ function HomeContainer() {
           const encodedPolyline = response.routes[0].overview_polyline;
           const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
           const coords = decodedPath.map((p: any) => [p.lat(), p.lng()]);
-          const reduced = reduceCoordinates(coords);
-          const midpoints = getCircleCenters(reduced);
+          const isWalking = travelMode === "WALKING";
+          const processedCoords = isWalking ? coords : reduceCoordinates(coords);
+          const midpoints = isWalking
+            ? generateWalkingMidpoints(processedCoords)
+            : getCircleCenters(processedCoords);
           const locations: { lat: number; lng: number }[] = [];
 
           // Add a small marker at each midpoint
@@ -459,11 +468,12 @@ function HomeContainer() {
       // Retrieve all places from the list of locations, then filter them and sort them afterwards
       const allPlaces = await fetchAllNearbyPlaces(locations, map);
       const uniquePlaces = removeDuplicates(allPlaces);
-      const sortedPlaces = sortPlaces(uniquePlaces);
-      //console.log(sortedPlaces);
-
-      // return the cleaned and sorted list of places
-      return sortedPlaces;
+      const filtered = uniquePlaces.filter((p) => {
+        const lat = p.location?.latitude;
+        const lng = p.location?.longitude;
+        return lat !== undefined && lng !== undefined && isInAnyBounds(lat, lng);
+      });
+      return sortPlaces(filtered);
     } catch (error) {
       // if anything goes wrong during the process for whatever reason, simply return an empty list
       console.error("Error fetching or processing places:", error);
@@ -486,6 +496,15 @@ function HomeContainer() {
       }
     });
     return uniquePlaces;
+  }
+
+  function isInAnyBounds(lat: number, lng: number): boolean {
+    return boundsListRef.current.some((bounds) => (
+      lat >= bounds.south &&
+      lat <= bounds.north &&
+      lng >= bounds.west &&
+      lng <= bounds.east
+    ));
   }
 
   function sortPlacesByRating(places_array: any[]): any[] {
@@ -550,32 +569,12 @@ function HomeContainer() {
     const lowLng = location.lng - lonChange;
     const highLng = location.lng + lonChange;
 
-    const bounds = {
-      north: highLat,
-      south: lowLat,
-      east: highLng,
-      west: lowLng
-    };
-
-    // const rectangle = new google.maps.Rectangle({
-    //   map: map,
-    //   bounds: bounds,
-    //   fillColor: "#0000FF", // Semi-transparent blue
-    //   fillOpacity: 0.1,
-    //   strokeColor: "#0000FF", // Blue rectangle border
-    //   strokeOpacity: 0.5,
-    //   strokeWeight: 1
-    // });
-
-    // //track rectangle so it clears next search
-    // circlesRef.current.push(rectangle as unknown as google.maps.Circle);
-
     const body = {
       "textQuery": searchQuery,
       "locationRestriction": {
         "rectangle": {
-          "low": { "latitude": lowLat, "longitude": lowLng },
-          "high": { "latitude": highLat, "longitude": highLng }
+          "low": { latitude: lowLat, longitude: lowLng },
+          "high": { latitude: highLat, longitude: highLng }
         }
       }
     };
@@ -600,17 +599,72 @@ function HomeContainer() {
       });
 
       const data: PlacesResponse = await response.json();
-      places_return = data.places || []; // Ensure places_return is populated with places from the response
+      const rawPlaces = data.places || [];
+
+      // Filter out places outside the rectangle
+      places_return = rawPlaces.filter((place) => {
+        const lat = place.location?.latitude;
+        const lng = place.location?.longitude;
+        return (
+          lat !== undefined &&
+          lng !== undefined &&
+          lat >= lowLat &&
+          lat <= highLat &&
+          lng >= lowLng &&
+          lng <= highLng
+        );
+      });
+
     } catch (error) {
       console.error('Error during fetch:', error);
     }
 
-    return places_return; // Return the places array after the fetch completes
+    return places_return;
   }
 
 
-
   const metersToDegrees = (meters: number) => meters / 111320;
+
+  //helper function for walking mode of travel
+  function generateWalkingMidpoints(path: number[][]): number[][] {
+    const minDistanceMeters = 400;
+    const minDistanceDegrees = metersToDegrees(minDistanceMeters);
+
+    const points: number[][] = [];
+    let lastLat = path[0][0];
+    let lastLng = path[0][1];
+    points.push([lastLat, lastLng]);
+
+    let accumulatedDist = 0;
+
+    for (let i = 1; i < path.length; i++) {
+      const [currLat, currLng] = path[i];
+      const dist = Math.sqrt(
+        Math.pow(currLat - lastLat, 2) + Math.pow(currLng - lastLng, 2)
+      );
+      accumulatedDist += dist;
+
+      if (accumulatedDist >= minDistanceDegrees) {
+        points.push([currLat, currLng]);
+        lastLat = currLat;
+        lastLng = currLng;
+        accumulatedDist = 0;
+      }
+    }
+
+    //ensure final point is included
+    const [endLat, endLng] = path[path.length - 1];
+    const [lastPtLat, lastPtLng] = points[points.length - 1];
+    const distToEnd = Math.sqrt(
+      Math.pow(endLat - lastPtLat, 2) + Math.pow(endLng - lastPtLng, 2)
+    );
+    if (distToEnd > 0.00001) {
+      points.push([endLat, endLng]);
+    }
+
+    return points;
+  }
+
 
   const perpendicularDistance = (
     px: number,
