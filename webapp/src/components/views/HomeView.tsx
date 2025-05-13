@@ -86,10 +86,19 @@ export default function HomeView({
       </div>
       <div className="maingridwraper">
   
-        <div className="maingrid"> 
-            <div className="mainGridTwo mobile-view">
+        <div className="mainGrid"> 
+            <div className="mainGridTwo">
               <MapView mapRef={mapRef} ></MapView>
             </div>
+
+            <ListView
+                places={places}
+                selectedPlaceName={selectedPlaceName}
+                // Clicking the same item again will deselect it
+                onSelect={(name: string | null) =>
+                  setSelectedPlaceName((prev) => (prev === name ? null : name))
+                }
+              />
 
             <div className="mainGridThree">
               <SearchBoxView
@@ -108,9 +117,7 @@ export default function HomeView({
               />
             </div>
 
-            <div className="mainGridOne">
-              <ListView places={places}></ListView>
-            </div>
+
         </div>
       </div>
     </div>
@@ -123,9 +130,16 @@ export default function HomeView({
       </div>
       <div className="maingridwraper">
   
-        <div className="maingrid"> 
+        <div className="mainGrid"> 
           <div className="mainGridOne">
-            <ListView places={places}></ListView>
+            <ListView
+              places={places}
+              selectedPlaceName={selectedPlaceName}
+              // Clicking the same item again will deselect it
+              onSelect={(name: string | null) =>
+                setSelectedPlaceName((prev) => (prev === name ? null : name))
+              }
+            />
           </div>
           <div className="mainGridTwo">
             <MapView mapRef={mapRef} ></MapView>

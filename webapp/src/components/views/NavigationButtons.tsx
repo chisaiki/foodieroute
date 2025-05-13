@@ -3,7 +3,19 @@
 import { Link } from "react-router-dom";
 import { AuthView } from "../../config/auth"; // Displays login/logout widget
 
+import { useAuth } from "../../config/AuthUser";
+
 export default function NavigationButtons() {
+    const { userData } = useAuth();
+    const isLoggedIn = !!userData?.uid;
+
+
+    const historyNav = isLoggedIn ? (
+
+        <Link to="/Settings" className="hover:text-indigo-600">History</Link>
+    ) : (
+        <div></div>
+    );
     return (
         // Top header with logo on the left and links on the right
         <header className="h-14 w-full bg-white shadow flex items-center px-6 justify-between">
@@ -15,20 +27,12 @@ export default function NavigationButtons() {
             >
                 BiteRoute
             </Link>
-
-            {/* Navigation links aligned to the right */}
             <nav className="flex items-center gap-8 text-sm font-medium">
-                <Link to="/Settings" className="hover:text-indigo-600">History</Link>
-                {/* <Link
-                    to="/banana"
-                    className="hover:text-indigo-600 flex items-center gap-1"
-                >
-                    Bananas <span>🍌</span>
-                </Link> */}
+                {historyNav}
 
-                {/* User account section that shows login/logout */}
                 <AuthView />
             </nav>
+
         </header>
     );
 }
