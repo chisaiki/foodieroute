@@ -1,6 +1,7 @@
 /* HomeView – main layout with navigation bar, sidebar, map, and search controls */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
 
 import NavigationButtons from "./NavigationButtons";
 import ListView from "./List";
@@ -10,7 +11,6 @@ import SearchBoxView from "./SearchBoxView";
 import { Place } from "../../../types/types";
 
 import "../styles/tailwindStyle.css";
-
 
 type HomeViewProps = {
   places: Place[];
@@ -65,94 +65,213 @@ export default function HomeView({
 }: HomeViewProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSearchCollapsed, setIsSearchCollapsed] = useState(false);
-  return (
-    // Use flex layout to stack navigation on top of main content
-    <div className="flex flex-col h-screen">
 
-      {/* Navigation bar at the top */}
-      <NavigationButtons />
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-      {/* Main area is a two-column grid: sidebar + map */}
-        <div
-        className={flex flex-col lg:grid overflow-hidden flex-1 transition-all duration-300 ${
-        isSidebarCollapsed
-        ? 'lg:grid-cols-[0_1fr]'
-        : 'lg:grid-cols-[300px_1fr]'
-        }}
-        >
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
 
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
 
-
-        {/* Left column: list of search results */}
-            {/* Toggle Button – absolutely positioned over the map area */}
-        <button
-          className="absolute top-20 left-2 z-20 text-sm bg-white border px-2 py-1 rounded shadow hover:bg-gray-100"
-          onClick={() => setIsSidebarCollapsed((prev) => !prev)}
-        >
-          {isSidebarCollapsed ? 'Show List' : 'Hide List'}
-        </button>
-
-        {/* Left column: collapsible sidebar */}
-          <aside
-          className={bg-pink-200 transition-all duration-300 overflow-y-auto ${
-          isSidebarCollapsed
-          ? 'max-h-0 lg:max-h-full lg:w-0 p-0 overflow-hidden'
-          : 'max-h-[33vh] lg:h-full lg:max-h-full lg:w-full p-4'
-          }}
-          >
-          {!isSidebarCollapsed && (
-          <ListView
-          places={places}
-          selectedPlaceName={selectedPlaceName}
-          onSelect={(name) =>
+  const listDiv = () => {
+    if (isSidebarCollapsed) {
+      return (
+        <div></div>
+      )
+    } else {
+      return (
+        <ListView
+        places={places}
+        selectedPlaceName={selectedPlaceName}
+        onSelect={(name: string | null) =>
           setSelectedPlaceName((prev) => (prev === name ? null : name))
-          }
-          />
-          )}
-          </aside>
+        }
+      />
+      )
+    }
+  }
 
-
-        {/* Right column: map and search controls */}
-        <section className="flex flex-col flex-1 min-h-0">
-          <MapView mapRef={mapRef} selectedPlaceName={selectedPlaceName} />
-
-            <div
-            className={transition-all duration-300 overflow-hidden ${
-            isSearchCollapsed ? 'max-h-12 p-2' : 'max-h-[500px] p-4'
-            } bg-indigo-50}
-            >
-            <div className="flex justify-end">
-            <button
-            className="text-sm text-gray-700 hover:underline mb-2"
-            onClick={() => setIsSearchCollapsed((prev) => !prev)}
-            >
-            {isSearchCollapsed ? 'Show Search Controls' : 'Hide Search Controls'}
-            </button>
+  if (windowWidth <= 800) { // Mobile Layout
+    return (
+      <div>
+      <div className="temp-nav-bar">
+          <NavigationButtons></NavigationButtons>
+      </div>
+      <div className="maingridwraper">
+  
+        <div className="mainGrid"> 
+            <div className="mainGridTwo">
+              <MapView mapRef={mapRef} ></MapView>
             </div>
 
-            <div className={transition-opacity duration-300 ${isSearchCollapsed ? 'opacity-0 h-0' : 'opacity-100 h-auto'}}>
-            {!isSearchCollapsed && (
-            <SearchBoxView
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            triggerSearch={triggerSearch}
-            originRef={originRef}
-            destRef={destRef}
-            travelMode={travelMode}
-            setTravelMode={setTravelMode}
-            sortMethod={sortMethod}
-            setSortMethod={setSortMethod}
-            selectedPlaceName={selectedPlaceName}
-            setSelectedPlaceName={setSelectedPlaceName}
-            />
-            )}
-            </div>
+            <ListView
+                places={places}
+                selectedPlaceName={selectedPlaceName}
+                // Clicking the same item again will deselect it
+                onSelect={(name: string | null) =>
+                  setSelectedPlaceName((prev) => (prev === name ? null : name))
+                }
+              />
+
+            <div className="mainGridThree">
+              <SearchBoxView
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                triggerSearch={triggerSearch}
+                originRef={originRef}
+                destRef={destRef}
+                travelMode={travelMode}
+                setTravelMode={setTravelMode}
+                sortMethod={sortMethod}
+                setSortMethod={setSortMethod}
+                className="bg-indigo-50 p-4"
+                selectedPlaceName={selectedPlaceName}
+                setSelectedPlaceName={setSelectedPlaceName}
+              />
             </div>
 
 
-        </section>
+        </div>
       </div>
     </div>
-  );
+    );
+  } else {  // Desktop Layout
+    return (
+      <div>
+        <div className="temp-nav-bar">
+          <NavigationButtons />
+        </div>
+        <div className="maingridwraper">
+          <div className={`mainGrid ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+            <div className={`mainGridOne ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+              <div className="flex justify-end p-2">
+                <button
+                  className="text-sm text-gray-700 hover:underline"
+                  onClick={() => setIsSidebarCollapsed(prev => !prev)}
+                >
+                  {isSidebarCollapsed ? 'Show List' : 'Hide List'}
+                </button>
+              </div>
+
+              {listDiv()}
+            </div>
+
+            <div className="mainGridTwo">
+              <MapView mapRef={mapRef} />
+            </div>
+
+            <div className={`mainGridThree transition-all duration-300 ${
+              isSearchCollapsed ? 'max-h-12' : 'max-h-[500px]'
+            }`}>
+              <div className="flex justify-end p-2">
+                <button
+                  className="text-sm text-gray-700 hover:underline"
+                  onClick={() => setIsSearchCollapsed(prev => !prev)}
+                >
+                  {isSearchCollapsed ? 'Show Search Controls' : 'Hide Search Controls'}
+                </button>
+              </div>
+              
+              <div className={`transition-opacity duration-300 ${
+                isSearchCollapsed ? 'opacity-0 h-0' : 'opacity-100 h-auto'
+              }`}>
+                {!isSearchCollapsed && (
+                  <SearchBoxView
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    triggerSearch={triggerSearch}
+                    originRef={originRef}
+                    destRef={destRef}
+                    travelMode={travelMode}
+                    setTravelMode={setTravelMode}
+                    sortMethod={sortMethod}
+                    setSortMethod={setSortMethod}
+                    selectedPlaceName={selectedPlaceName}
+                    setSelectedPlaceName={setSelectedPlaceName}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
+
+
+
+
+  
+//   return (
+
+//     // Use flex layout to stack navigation on top of main content
+//     <div className="flex flex-col h-screen">
+
+//       {/* Navigation bar at the top */}
+//       <NavigationButtons />
+
+//       {/* Main area is a two-column grid: sidebar + map */}
+//         <div
+//         className={flex flex-col lg:grid overflow-hidden flex-1 transition-all duration-300 ${
+//         isSidebarCollapsed
+//         ? 'lg:grid-cols-[0_1fr]'
+//         : 'lg:grid-cols-[300px_1fr]'
+//         }}
+//         >
+
+
+
+
+
+//         {/* Right column: map and search controls */}
+//         <section className="flex flex-col flex-1 min-h-0">
+//           <MapView mapRef={mapRef} selectedPlaceName={selectedPlaceName} />
+
+//             <div
+//             className={transition-all duration-300 overflow-hidden ${
+//             isSearchCollapsed ? 'max-h-12 p-2' : 'max-h-[500px] p-4'
+//             } bg-indigo-50}
+//             >
+//             <div className="flex justify-end">
+//             <button
+//             className="text-sm text-gray-700 hover:underline mb-2"
+//             onClick={() => setIsSearchCollapsed((prev) => !prev)}
+//             >
+//             {isSearchCollapsed ? 'Show Search Controls' : 'Hide Search Controls'}
+//             </button>
+//             </div>
+
+//             <div className={transition-opacity duration-300 ${isSearchCollapsed ? 'opacity-0 h-0' : 'opacity-100 h-auto'}}>
+//             {!isSearchCollapsed && (
+//             <SearchBoxView
+//             searchQuery={searchQuery}
+//             setSearchQuery={setSearchQuery}
+//             triggerSearch={triggerSearch}
+//             originRef={originRef}
+//             destRef={destRef}
+//             travelMode={travelMode}
+//             setTravelMode={setTravelMode}
+//             sortMethod={sortMethod}
+//             setSortMethod={setSortMethod}
+//             selectedPlaceName={selectedPlaceName}
+//             setSelectedPlaceName={setSelectedPlaceName}
+//             />
+//             )}
+//             </div>
+//             </div>
+
+
+//         </section>
+//       </div>
+//     </div>
+//   );
+// }
