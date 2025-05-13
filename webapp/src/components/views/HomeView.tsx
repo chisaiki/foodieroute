@@ -1,6 +1,6 @@
 /* HomeView – main layout with navigation bar, sidebar, map, and search controls */
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 import NavigationButtons from "./NavigationButtons";
 import ListView from "./List";
@@ -10,6 +10,7 @@ import SearchBoxView from "./SearchBoxView";
 import { Place } from "../../../types/types";
 
 import "../styles/tailwindStyle.css";
+
 
 type HomeViewProps = {
   places: Place[];
@@ -62,77 +63,77 @@ export default function HomeView({
   selectedPlaceName,
   setSelectedPlaceName,
 }: HomeViewProps) {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSearchCollapsed, setIsSearchCollapsed] = useState(false);
+  return (
+    // Use flex layout to stack navigation on top of main content
+    <div className="flex flex-col h-screen">
+
+      {/* Navigation bar at the top */}
+      <NavigationButtons />
+
+      {/* Main area is a two-column grid: sidebar + map */}
+        <div
+        className={flex flex-col lg:grid overflow-hidden flex-1 transition-all duration-300 ${
+        isSidebarCollapsed
+        ? 'lg:grid-cols-[0_1fr]'
+        : 'lg:grid-cols-[300px_1fr]'
+        }}
+        >
 
 
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
 
-    window.addEventListener('resize', handleResize);
+        {/* Left column: list of search results */}
+            {/* Toggle Button – absolutely positioned over the map area */}
+        <button
+          className="absolute top-20 left-2 z-20 text-sm bg-white border px-2 py-1 rounded shadow hover:bg-gray-100"
+          onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+        >
+          {isSidebarCollapsed ? 'Show List' : 'Hide List'}
+        </button>
 
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
+        {/* Left column: collapsible sidebar */}
+          <aside
+          className={bg-pink-200 transition-all duration-300 overflow-y-auto ${
+          isSidebarCollapsed
+          ? 'max-h-0 lg:max-h-full lg:w-0 p-0 overflow-hidden'
+          : 'max-h-[33vh] lg:h-full lg:max-h-full lg:w-full p-4'
+          }}
+          >
+          {!isSidebarCollapsed && (
+          <ListView
+          places={places}
+          selectedPlaceName={selectedPlaceName}
+          onSelect={(name) =>
+          setSelectedPlaceName((prev) => (prev === name ? null : name))
+          }
+          />
+          )}
+          </aside>
 
-  if (windowWidth <= 800) {
-    return (
-      <div>
-      <div className="temp-nav-bar">
-          <NavigationButtons></NavigationButtons>
-      </div>
-      <div className="maingridwraper">
-  
-        <div className="maingrid"> 
-            <div className="mainGridTwo mobile-view">
-              <MapView mapRef={mapRef} ></MapView>
+
+        {/* Right column: map and search controls */}
+        <section className="flex flex-col flex-1 min-h-0">
+          <MapView mapRef={mapRef} selectedPlaceName={selectedPlaceName} />
+
+            <div
+            className={transition-all duration-300 overflow-hidden ${
+            isSearchCollapsed ? 'max-h-12 p-2' : 'max-h-[500px] p-4'
+            } bg-indigo-50}
+            >
+            <div className="flex justify-end">
+            <button
+            className="text-sm text-gray-700 hover:underline mb-2"
+            onClick={() => setIsSearchCollapsed((prev) => !prev)}
+            >
+            {isSearchCollapsed ? 'Show Search Controls' : 'Hide Search Controls'}
+            </button>
             </div>
 
-            <div className="mainGridThree">
-              <SearchBoxView
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                triggerSearch={triggerSearch}
-                originRef={originRef}
-                destRef={destRef}
-                travelMode={travelMode}
-                setTravelMode={setTravelMode}
-                sortMethod={sortMethod}
-                setSortMethod={setSortMethod}
-                className="bg-indigo-50 p-4"
-                selectedPlaceName={selectedPlaceName}
-                setSelectedPlaceName={setSelectedPlaceName}
-              />
-            </div>
-
-            <div className="mainGridOne">
-              <ListView places={places}></ListView>
-            </div>
-        </div>
-      </div>
-    </div>
-    );
-  } else {
-    return (
-      <div>
-      <div className="temp-nav-bar">
-          <NavigationButtons></NavigationButtons>
-      </div>
-      <div className="maingridwraper">
-  
-        <div className="maingrid"> 
-          <div className="mainGridOne">
-            <ListView places={places}></ListView>
-          </div>
-          <div className="mainGridTwo">
-            <MapView mapRef={mapRef} ></MapView>
-
-          </div>
-          <div className="mainGridThree">
-          <SearchBoxView
+            <div className={transition-opacity duration-300 ${isSearchCollapsed ? 'opacity-0 h-0' : 'opacity-100 h-auto'}}>
+            {!isSearchCollapsed && (
+            <SearchBoxView
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             triggerSearch={triggerSearch}
@@ -142,21 +143,16 @@ export default function HomeView({
             setTravelMode={setTravelMode}
             sortMethod={sortMethod}
             setSortMethod={setSortMethod}
-            className="bg-indigo-50 p-4"
-
-            // Keeps track of the selected place so map/list can highlight it
             selectedPlaceName={selectedPlaceName}
             setSelectedPlaceName={setSelectedPlaceName}
             />
-            
-          </div>
-  
-        </div>
+            )}
+            </div>
+            </div>
+
+
+        </section>
       </div>
-  
     </div>
-    );
-  }
-
-
+  );
 }
