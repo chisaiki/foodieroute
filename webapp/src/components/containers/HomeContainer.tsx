@@ -584,6 +584,7 @@ function HomeContainer() {
 
   async function fetchNearbyPlaces(location: { lat: number; lng: number }, map: any): Promise<Place[]> {
     let places_return: Place[] = [];
+
     const url = `https://places.googleapis.com/v1/places:searchText?key=${googleMapsAPIKey}`;
 
     const LATITUDE_DEGREE_METERS = 111320;
@@ -620,7 +621,7 @@ function HomeContainer() {
             "places.priceLevel",
             "places.formattedAddress",
             "places.userRatingCount",
-            "places.editorialSummary"
+            //"places.editorialSummary"
           ].join(",")
         },
         body: JSON.stringify(body)

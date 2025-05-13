@@ -22,5 +22,5 @@
     //   );
     // }
 
-    return <div ref={mapRef} style={{ width: "100%", height: "100%" }} />;
+    return <div ref={mapRef} className="flex-1 w-full" style={{ width: "100%", height: "100%" }} />;
   }
