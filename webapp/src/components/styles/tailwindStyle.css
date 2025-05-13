@@ -47,13 +47,16 @@ aside::-webkit-scrollbar-track {
   grid-template-rows: 1fr auto;
   grid-template-areas:
     "one two"
+
     "one three";
   transition: grid-template-columns 0.3s ease;
 }
 
 .mainGrid.collapsed {
   grid-template-columns: 100px 1fr;
+
 }
+
 
 .mainGridOne {
   /* background: rgba(255, 0, 0, 0.352); */

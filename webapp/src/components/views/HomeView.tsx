@@ -146,6 +146,7 @@ export default function HomeView({
   } else {  // Desktop Layout
     return (
       <div>
+
         <div className="temp-nav-bar">
           <NavigationButtons />
         </div>
@@ -206,72 +207,3 @@ export default function HomeView({
     );
   }
 }
-
-
-
-
-  
-//   return (
-
-//     // Use flex layout to stack navigation on top of main content
-//     <div className="flex flex-col h-screen">
-
-//       {/* Navigation bar at the top */}
-//       <NavigationButtons />
-
-//       {/* Main area is a two-column grid: sidebar + map */}
-//         <div
-//         className={flex flex-col lg:grid overflow-hidden flex-1 transition-all duration-300 ${
-//         isSidebarCollapsed
-//         ? 'lg:grid-cols-[0_1fr]'
-//         : 'lg:grid-cols-[300px_1fr]'
-//         }}
-//         >
-
-
-
-
-
-//         {/* Right column: map and search controls */}
-//         <section className="flex flex-col flex-1 min-h-0">
-//           <MapView mapRef={mapRef} selectedPlaceName={selectedPlaceName} />
-
-//             <div
-//             className={transition-all duration-300 overflow-hidden ${
-//             isSearchCollapsed ? 'max-h-12 p-2' : 'max-h-[500px] p-4'
-//             } bg-indigo-50}
-//             >
-//             <div className="flex justify-end">
-//             <button
-//             className="text-sm text-gray-700 hover:underline mb-2"
-//             onClick={() => setIsSearchCollapsed((prev) => !prev)}
-//             >
-//             {isSearchCollapsed ? 'Show Search Controls' : 'Hide Search Controls'}
-//             </button>
-//             </div>
-
-//             <div className={transition-opacity duration-300 ${isSearchCollapsed ? 'opacity-0 h-0' : 'opacity-100 h-auto'}}>
-//             {!isSearchCollapsed && (
-//             <SearchBoxView
-//             searchQuery={searchQuery}
-//             setSearchQuery={setSearchQuery}
-//             triggerSearch={triggerSearch}
-//             originRef={originRef}
-//             destRef={destRef}
-//             travelMode={travelMode}
-//             setTravelMode={setTravelMode}
-//             sortMethod={sortMethod}
-//             setSortMethod={setSortMethod}
-//             selectedPlaceName={selectedPlaceName}
-//             setSelectedPlaceName={setSelectedPlaceName}
-//             />
-//             )}
-//             </div>
-//             </div>
-
-
-//         </section>
-//       </div>
-//     </div>
-//   );
-// }
