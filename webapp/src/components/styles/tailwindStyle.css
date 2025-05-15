@@ -43,19 +43,32 @@ aside::-webkit-scrollbar-track {
   /* height: 100%; */
   /* flex-grow: 1; */
   display: grid;
-  grid-template-columns: 1fr 3fr;
-  /* grid-template-rows: 1fr min-content; */
+  grid-template-columns: minmax(100px, 300px) 1fr;
   grid-template-rows: 1fr auto;
   grid-template-areas:
     "one two"
-    "one three"
+
+    "one three";
+  transition: grid-template-columns 0.3s ease;
+}
+
+.mainGrid.collapsed {
+  grid-template-columns: 100px 1fr;
+
 }
 
 
 .mainGridOne {
   /* background: rgba(255, 0, 0, 0.352); */
   grid-area: one;
-  min-width: 400px;
+  min-width: 140px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.mainGridOne.collapsed {
+  min-width: 100px;
+  width: 100px;
 }
 
 .mainGridTwo {

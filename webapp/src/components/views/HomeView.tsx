@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 
+
 import NavigationButtons from "./NavigationButtons";
 import ListView from "./List";
 import MapView from "./MapView";
@@ -62,7 +63,8 @@ export default function HomeView({
   selectedPlaceName,
   setSelectedPlaceName,
 }: HomeViewProps) {
-
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSearchCollapsed, setIsSearchCollapsed] = useState(false);
 
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -78,7 +80,26 @@ export default function HomeView({
     };
   }, []);
 
-  if (windowWidth <= 800) {
+
+  const listDiv = () => {
+    if (isSidebarCollapsed) {
+      return (
+        <div></div>
+      )
+    } else {
+      return (
+        <ListView
+        places={places}
+        selectedPlaceName={selectedPlaceName}
+        onSelect={(name: string | null) =>
+          setSelectedPlaceName((prev) => (prev === name ? null : name))
+        }
+      />
+      )
+    }
+  }
+
+  if (windowWidth <= 800) { // Mobile Layout
     return (
       <div>
       <div className="temp-nav-bar">
@@ -122,55 +143,67 @@ export default function HomeView({
       </div>
     </div>
     );
-  } else {
+  } else {  // Desktop Layout
     return (
       <div>
-      <div className="temp-nav-bar">
-          <NavigationButtons></NavigationButtons>
-      </div>
-      <div className="maingridwraper">
-  
-        <div className="mainGrid"> 
-          <div className="mainGridOne">
-            <ListView
-              places={places}
-              selectedPlaceName={selectedPlaceName}
-              // Clicking the same item again will deselect it
-              onSelect={(name: string | null) =>
-                setSelectedPlaceName((prev) => (prev === name ? null : name))
-              }
-            />
-          </div>
-          <div className="mainGridTwo">
-            <MapView mapRef={mapRef} ></MapView>
 
-          </div>
-          <div className="mainGridThree">
-          <SearchBoxView
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            triggerSearch={triggerSearch}
-            originRef={originRef}
-            destRef={destRef}
-            travelMode={travelMode}
-            setTravelMode={setTravelMode}
-            sortMethod={sortMethod}
-            setSortMethod={setSortMethod}
-            className="bg-indigo-50 p-4"
+        <div className="temp-nav-bar">
+          <NavigationButtons />
+        </div>
+        <div className="maingridwraper">
+          <div className={`mainGrid ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+            <div className={`mainGridOne ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+              <div className="flex justify-end p-2">
+                <button
+                  className="text-sm text-gray-700 hover:underline"
+                  onClick={() => setIsSidebarCollapsed(prev => !prev)}
+                >
+                  {isSidebarCollapsed ? 'Show List' : 'Hide List'}
+                </button>
+              </div>
 
-            // Keeps track of the selected place so map/list can highlight it
-            selectedPlaceName={selectedPlaceName}
-            setSelectedPlaceName={setSelectedPlaceName}
-            />
-            
+              {listDiv()}
+            </div>
+
+            <div className="mainGridTwo">
+              <MapView mapRef={mapRef} />
+            </div>
+
+            <div className={`mainGridThree transition-all duration-300 ${
+              isSearchCollapsed ? 'max-h-12' : 'max-h-[500px]'
+            }`}>
+              <div className="flex justify-end p-2">
+                <button
+                  className="text-sm text-gray-700 hover:underline"
+                  onClick={() => setIsSearchCollapsed(prev => !prev)}
+                >
+                  {isSearchCollapsed ? 'Show Search Controls' : 'Hide Search Controls'}
+                </button>
+              </div>
+              
+              <div className={`transition-opacity duration-300 ${
+                isSearchCollapsed ? 'opacity-0 h-0' : 'opacity-100 h-auto'
+              }`}>
+                {!isSearchCollapsed && (
+                  <SearchBoxView
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    triggerSearch={triggerSearch}
+                    originRef={originRef}
+                    destRef={destRef}
+                    travelMode={travelMode}
+                    setTravelMode={setTravelMode}
+                    sortMethod={sortMethod}
+                    setSortMethod={setSortMethod}
+                    selectedPlaceName={selectedPlaceName}
+                    setSelectedPlaceName={setSelectedPlaceName}
+                  />
+                )}
+              </div>
+            </div>
           </div>
-  
         </div>
       </div>
-  
-    </div>
     );
   }
-
-
 }
