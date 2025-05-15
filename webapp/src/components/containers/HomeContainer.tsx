@@ -21,10 +21,11 @@ function HomeContainer() {
   // Get Google Maps API key from environment variables
   const googleMapsAPIKey: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
+
   // Get current user data from authentication context
   const { userData } = useAuth();
   const updateHistory = useUpdateHistory();
-  const location = useLocation();
+  const location = useLocation(); // For history page
 
   // Current sorting method for results
   const [sortMethod, setSortMethod] = useState<"Rating" | "Price" | "Count">("Rating");
@@ -111,6 +112,31 @@ function HomeContainer() {
 
   // Store all markers by place name for later reference
   const placeMarkersRef = useRef<Record<string, google.maps.Marker>>({});
+
+  // Handle history item data from navigation
+  useEffect(() => {
+    const historyItem = location.state?.historyItem;
+    if (historyItem) {
+      console.log("History item found");
+      console.log(historyItem);
+      setOrigin(historyItem.origin);
+      setDest(historyItem.destination);
+      setOrigin_string(historyItem.origin_string);
+      setDestination_string(historyItem.destination_string);
+      
+      // Use a single useEffect to trigger search after all state updates
+      // This timeout is used to ensure that the search is triggered after all state updates
+      const timer = setTimeout(() => {
+        if (origin_string === historyItem.origin_string && 
+            destination_string === historyItem.destination_string) {
+          triggerSearch();
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [location.state, origin_string, destination_string]);
+
 
   useEffect(() => {
     if (typeof google === "undefined" || !google.maps) return;
