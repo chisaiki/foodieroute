@@ -1,6 +1,6 @@
 // ListView – shows a clickable list of places with optional extra details
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Place, PriceLevel } from "../../../types/types";
 
 // Converts price level enums into readable dollar signs
@@ -33,8 +33,24 @@ export default function ListView({
     );
   }
 
-  return (
-    <ul className="space-y-1 p-1">
+  // Lazy way to fix the layout on mobile
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  const renderList = () => {
+    return (
+      <ul className="space-y-1 p-1">
       {places.map((p) => {
         // Fallback name if none provided
         const name = p.displayName?.text ?? "Unnamed place";
@@ -81,6 +97,23 @@ export default function ListView({
           </li>
         );
       })}
-    </ul>
+      </ul>
+    )
+  }
+
+  // Mobile Layout
+  if (windowWidth <= 800) {
+    return ( 
+      <div>{renderList()}</div>
+      // {renderList()}
+    )
+  }
+
+  // Desktop Layout
+  return (
+    <div className="overflow-auto max-h-[calc(100vh-90px)]">
+      {renderList()}
+    </div>
+
   );
 }
