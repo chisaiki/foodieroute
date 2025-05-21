@@ -2,7 +2,7 @@ import HomeView from "../views/HomeView";
 import { useEffect, useRef, useState } from "react";
 import { Place, PriceLevel } from "../../../types/types";
 import { decodePlaces } from "../../../types/decoders";
-import { useAuth, useUpdateHistory } from '../../config/AuthUser';
+import { useAuth, useUpdateHistory, appendSettingsToSearch} from '../../config/AuthUser';
 import { useLocation } from 'react-router-dom';
 
 // Declare global Google Maps interface used by script loader
@@ -493,10 +493,10 @@ function HomeContainer() {
                   const firstPhoto = place.photos?.[0];
 
                   //photo API call
-                  // if (firstPhoto?.name) {
-                  //   const photoUrl = `https://places.googleapis.com/v1/${firstPhoto.name}/media?maxWidthPx=400&key=${googleMapsAPIKey}`;
-                  //   photoHtml = `<img src="${photoUrl}" style="max-width:250px; max-height:150px; object-fit:cover; border-radius:4px;" />`;
-                  // }
+                  if (firstPhoto?.name) {
+                    const photoUrl = `https://places.googleapis.com/v1/${firstPhoto.name}/media?maxWidthPx=400&key=${googleMapsAPIKey}`;
+                    photoHtml = `<img src="${photoUrl}" style="max-width:250px; max-height:150px; object-fit:cover; border-radius:4px;" />`;
+                  }
 
                   const content = `
                     <div style="max-width:300px;">
@@ -524,6 +524,7 @@ function HomeContainer() {
 
   // Fetches places near each location, removes duplicates, and sorts them
   async function getSortedAndUniquePlaces(locations: { lat: number; lng: number }[], map: google.maps.Map): Promise<any[]> {
+    console.log("getSortedAndUniquePlaces called");
     try {
       // Retrieve all places from the list of locations, then filter them and sort them afterwards
       const allPlaces = await fetchAllNearbyPlaces(locations, map);
@@ -605,6 +606,7 @@ function HomeContainer() {
     locations: { lat: number; lng: number }[],
     map: google.maps.Map
   ): Promise<Place[]> {
+    // console.log("fetchAllNearbyPlaces called");
     // launch all fetches simultaneously for performance increase
     const results = await Promise.all(
       locations.map((loc) => fetchNearbyPlaces(loc, map))
@@ -629,8 +631,15 @@ function HomeContainer() {
     const lowLng = location.lng - lonChange;
     const highLng = location.lng + lonChange;
 
+
+    const modifiedSearchQuery = appendSettingsToSearch(userData);
+    const modifiedSearchQuery2 = searchQuery + modifiedSearchQuery;
+    console.log("Search Query: " + searchQuery);
+    console.log("Modified Search Query: " + modifiedSearchQuery2);
+    
     const body = {
-      "textQuery": searchQuery,
+
+      "textQuery": modifiedSearchQuery2,
       "locationRestriction": {
         "rectangle": {
           "low": { latitude: lowLat, longitude: lowLng },
