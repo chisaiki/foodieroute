@@ -162,3 +162,14 @@ export const useUpdateHistory = () => {
 
   return updateHistory;
 };
+
+
+export const appendSettingsToSearch = (userData: UserData | null) => {
+  let return_str = "";
+
+  if (userData?.vegetarian) {
+    return_str += " vegetarian";
+  }
+
+  return return_str;
+}
