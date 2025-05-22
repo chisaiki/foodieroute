@@ -166,14 +166,25 @@ useEffect(() => {
         <div className="maingridwraper">
           <div className={`mainGrid ${isSidebarCollapsed ? 'collapsed' : ''}`}>
             <div className={`mainGridOne ${isSidebarCollapsed ? 'collapsed' : ''}`}>
-              <div className="flex justify-end p-2">
+              {/* <div className="flex justify-end p-2">
                 <button
                   className="text-sm text-gray-700 hover:underline"
                   onClick={() => setIsSidebarCollapsed(prev => !prev)}
                 >
                   {isSidebarCollapsed ? 'Show List' : 'Hide List'}
                 </button>
-              </div>
+              </div> */}
+              {windowWidth > 800 && (
+                <div className="flex justify-end p-2">
+                <button
+                  className="text-sm text-gray-700 hover:underline"
+                  onClick={() => setIsSidebarCollapsed(prev => !prev)}
+                >
+                  {isSidebarCollapsed ? 'Show List' : 'Hide List'}
+                </button>
+                </div>
+            )}
+
 
               {listDiv()}
             </div>
@@ -185,14 +196,30 @@ useEffect(() => {
             <div className={`mainGridThree transition-all duration-300 ${
               isSearchCollapsed ? 'max-h-12' : 'max-h-[500px]'
             }`}>
-              <div className="flex justify-end p-2">
+              {/* <div className="flex justify-end p-2">
                 <button
                   className="text-sm text-gray-700 hover:underline"
                   onClick={() => setIsSearchCollapsed(prev => !prev)}
                 >
                   {isSearchCollapsed ? 'Show Search Controls' : 'Hide Search Controls'}
                 </button>
-              </div>
+              </div> */}
+              <div className="flex justify-end p-2">
+              <button
+                className="text-sm text-gray-700 hover:underline"
+                onClick={() => setIsSearchCollapsed(prev => !prev)}
+              >
+                {windowWidth > 800
+                  // desktop: classic “Hide/Show Search Controls”
+                  ? (isSearchCollapsed ? 'Show Search Controls' : 'Hide Search Controls')
+                  // mobile: when controls are open (isSearchCollapsed===false) → “Show List”
+                  //         when controls are closed (isSearchCollapsed===true) → “Show Search Controls”
+                  : (isSearchCollapsed ? 'Show Search Controls' : 'Show List')
+                }
+              </button>
+            </div>
+
+
               
               <div className={`transition-opacity duration-300 ${
                 isSearchCollapsed ? 'opacity-0 h-0' : 'opacity-100 h-auto'
