@@ -23,14 +23,7 @@ aside::-webkit-scrollbar-track {
 
 /* Not sure if we should have one css file or multiple tbh */
 
-.maingridwraper {
-  height: 100%;
-  /* Ensure full height is available */
-  margin: 0;
-  /* border: 5px solid red; */
-  /* display: flex;
-  flex-direction: column; */
-}
+
 
 /* Desktop Layout */
 .mainGrid {
@@ -77,6 +70,7 @@ aside::-webkit-scrollbar-track {
   grid-area: two;
   height: 100%;
   min-height: 100%;
+  position: relative;
 }
 
 .mainGridThree {
@@ -88,6 +82,9 @@ aside::-webkit-scrollbar-track {
 .map-view {
   height: 100%;
   width: 100%;
+  position: absolute;        /* ← add this */
+  top: 0; left: 0;           /* ← add this */
+  right: 0; bottom: 0;
 }
 
 /* Mobile Layout */
@@ -110,7 +107,7 @@ aside::-webkit-scrollbar-track {
     min-height: 50vh;
   }
 
-}
+} 
 
 /* banana page for fun  */
 
