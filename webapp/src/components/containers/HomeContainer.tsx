@@ -118,28 +118,29 @@ function HomeContainer() {
   const placeMarkersRef = useRef<Record<string, google.maps.Marker>>({});
 
   // Handle history item data from navigation
-  useEffect(() => {
-    const historyItem = location.state?.historyItem;
-    if (historyItem) {
-      console.log("History item found");
-      console.log(historyItem);
-      setOrigin(historyItem.origin);
-      setDest(historyItem.destination);
-      setOrigin_string(historyItem.origin_string);
-      setDestination_string(historyItem.destination_string);
+    useEffect(() => {
+    const historyItem = (location.state as any)?.historyItem;
+    if (!historyItem) return;
 
-      // Use a single useEffect to trigger search after all state updates
-      // This timeout is used to ensure that the search is triggered after all state updates
-      const timer = setTimeout(() => {
-        if (origin_string === historyItem.origin_string &&
-          destination_string === historyItem.destination_string) {
-          triggerSearch();
-        }
-      }, 100);
+    // 1) populate map coords + React state
+    setOrigin(historyItem.origin);
+    setDest(historyItem.destination);
+    setOrigin_string(historyItem.origin_string);
+    setDestination_string(historyItem.destination_string);
+    setOriginValid(true);
+    setDestinationValid(true);
 
-      return () => clearTimeout(timer);
+    // 2) write values back into the raw <input> elements
+    if (originRef.current) {
+      originRef.current.value = historyItem.origin_string;
     }
-  }, [location.state, origin_string, destination_string]);
+    if (destRef.current) {
+      destRef.current.value = historyItem.destination_string;
+    }
+  }, [
+    // only run when the router state (historyItem) changes
+    location.state,
+  ]);
 
 
   useEffect(() => {
@@ -293,6 +294,7 @@ function HomeContainer() {
     directionsRenderer.setMap(map);
     directionsRendererRef.current = directionsRenderer;
 
+    
     // Hide default route line if user selects public transit
     if (travelMode === "TRANSIT") {
       directionsRenderer.setOptions({
@@ -398,6 +400,7 @@ function HomeContainer() {
             });
           }
 
+          return;
           // Generate points along the route for further place search
           const encodedPolyline = response.routes[0].overview_polyline;
           const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
