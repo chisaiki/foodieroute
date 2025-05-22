@@ -120,3 +120,29 @@ aside::-webkit-scrollbar-track {
   display: flex;
   justify-content: center;
 }
+
+
+/* InfoWindow styling */
+.info-window-content {
+  text-align: center;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.info-window-content h3 {
+  font-weight: 700;      /* bold */
+  margin: 0.5rem 0;       /* spacing above & below */
+}
+
+.info-window-content img {
+  display: block;
+  margin: 0 auto 0.5rem;  /* center + bottom gap */
+  max-width: 100%;
+  border-radius: 0.25rem;
+}
+
+.info-window-content p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+

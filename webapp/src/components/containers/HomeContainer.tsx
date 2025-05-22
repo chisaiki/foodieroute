@@ -505,14 +505,16 @@ function HomeContainer() {
                   photoHtml = `<img src="${photoUrl}" style="max-width:250px; max-height:150px; object-fit:cover; border-radius:4px;" />`;
                 }
 
+                // …inside your marker click handler…
                 const content = `
-                    <div style="max-width:300px;">
-                      <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
-                      ${photoHtml}
-                      <p>${place.formattedAddress || ''}</p>
-                    </div>`;
-
+                  <div class="info-window-content" style="max-width:300px;">
+                    <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
+                    ${photoHtml}
+                    <p>${place.formattedAddress || ''}</p>
+                  </div>
+                `;
                 infoWindow.setContent(content);
+
                 infoWindow.open(map, marker);
                 activeInfoWindowRef.current = infoWindow;
               });
@@ -890,7 +892,7 @@ function HomeContainer() {
       }
     }
     else {
-      alert("Please input valid origin and destination fields");
+      //alert("Please input valid origin and destination fields");
     }
   };
 
