@@ -2,7 +2,7 @@ import HomeView from "../views/HomeView";
 import { useEffect, useRef, useState } from "react";
 import { Place, PriceLevel } from "../../../types/types";
 import { decodePlaces } from "../../../types/decoders";
-import { useAuth, useUpdateHistory, appendSettingsToSearch} from '../../config/AuthUser';
+import { useAuth, useUpdateHistory, appendSettingsToSearch } from '../../config/AuthUser';
 import { useLocation } from 'react-router-dom';
 
 // Declare global Google Maps interface used by script loader
@@ -48,6 +48,10 @@ function HomeContainer() {
     lng: -73.9934,
   });
 
+  //states made to determine if input entered by user is valid, aka a given address is derived from google autocomplete
+  const [originValid, setOriginValid] = useState(false);
+  const [destinationValid, setDestinationValid] = useState(false);
+
   // Text input for origin and destination (used in search history)
   const [origin_string, setOrigin_string] = useState<string>("");
   const [destination_string, setDestination_string] = useState<string>("");
@@ -89,22 +93,22 @@ function HomeContainer() {
 
   //helper function for marker display when not selected
   const defaultMarkerIcon = (): google.maps.Symbol => ({
-      path: google.maps.SymbolPath.CIRCLE,
-      scale: 8, // Slightly larger
-      fillColor: "#4285F4", // Google blue
-      fillOpacity: 1,
-      strokeColor: "#ffffff", // White outline
-      strokeWeight: 2, // Thicker border
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: 8, // Slightly larger
+    fillColor: "#4285F4", // Google blue
+    fillOpacity: 1,
+    strokeColor: "#ffffff", // White outline
+    strokeWeight: 2, // Thicker border
   });
 
   //helper function for marker display when selected
   const selectedMarkerIcon = (): google.maps.Symbol => ({
-      path: google.maps.SymbolPath.CIRCLE,
-      scale: 10, // Larger circle
-      fillColor: "#DB4437", // Google red
-      fillOpacity: 1,
-      strokeColor: "#ffffff", // White outline
-      strokeWeight: 3, // Thicker border
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: 10, // Larger circle
+    fillColor: "#DB4437", // Google red
+    fillOpacity: 1,
+    strokeColor: "#ffffff", // White outline
+    strokeWeight: 3, // Thicker border
   });
 
   // Name of the currently selected place from the sidebar
@@ -123,12 +127,12 @@ function HomeContainer() {
       setDest(historyItem.destination);
       setOrigin_string(historyItem.origin_string);
       setDestination_string(historyItem.destination_string);
-      
+
       // Use a single useEffect to trigger search after all state updates
       // This timeout is used to ensure that the search is triggered after all state updates
       const timer = setTimeout(() => {
-        if (origin_string === historyItem.origin_string && 
-            destination_string === historyItem.destination_string) {
+        if (origin_string === historyItem.origin_string &&
+          destination_string === historyItem.destination_string) {
           triggerSearch();
         }
       }, 100);
@@ -254,6 +258,9 @@ function HomeContainer() {
 
   // essentially just handles map clearing, route fetching, marker drawing, and place display
   const searchRoute = (map: google.maps.Map) => {
+
+    console.log(ORIGIN.lat + ' and ' + ORIGIN.lng);
+    console.log(DESTINATION.lat + ' and ' + DESTINATION.lng);
     console.log("searchRoute called");
     // Clear previously stored place markers
     placeMarkersRef.current = {};
@@ -440,7 +447,7 @@ function HomeContainer() {
           } else {
             console.log("No user data found");
           }
-          
+
           try {
             // Fetch nearby places and remove duplicates
             const finalPlaces = await getSortedAndUniquePlaces(locations, map);
@@ -449,39 +456,39 @@ function HomeContainer() {
 
             // Place markers and InfoWindows for each result
             finalPlaces.forEach((place) => {
-                if (!place.location) return;
+              if (!place.location) return;
 
-                const marker = new google.maps.Marker({
-                  position: {
-                    lat: place.location.latitude,
-                    lng: place.location.longitude,
-                  },
-                  map,
-                  title: place.displayName?.text || 'Unnamed Place',
-                  icon: defaultMarkerIcon(),
-                });
+              const marker = new google.maps.Marker({
+                position: {
+                  lat: place.location.latitude,
+                  lng: place.location.longitude,
+                },
+                map,
+                title: place.displayName?.text || 'Unnamed Place',
+                icon: defaultMarkerIcon(),
+              });
 
-                if (place.displayName?.text) {
-                  placeMarkersRef.current[place.displayName.text] = marker;
+              if (place.displayName?.text) {
+                placeMarkersRef.current[place.displayName.text] = marker;
+              }
+              markersRef.current.push(marker);
+
+              const infoWindow = new google.maps.InfoWindow({
+                content: `<div style="max-width:300px;"><p>Loading...</p></div>`,
+              });
+
+
+              // When the marker is clicked, fetch photo and show updated info
+              let selectedMarker: google.maps.Marker | null = null;
+
+              marker.addListener("click", async () => {
+                if (activeInfoWindowRef.current) {
+                  activeInfoWindowRef.current.close();
                 }
-                markersRef.current.push(marker);
-
-                const infoWindow = new google.maps.InfoWindow({
-                  content: `<div style="max-width:300px;"><p>Loading...</p></div>`,
-                });
-
-
-                // When the marker is clicked, fetch photo and show updated info
-                let selectedMarker: google.maps.Marker | null = null;
-
-                marker.addListener("click", async () => {
-                  if (activeInfoWindowRef.current) {
-                    activeInfoWindowRef.current.close();
-                  }
 
                 Object.values(placeMarkersRef.current).forEach((m) => {
-                    m.setIcon(defaultMarkerIcon());
-                    m.setZIndex(undefined);
+                  m.setIcon(defaultMarkerIcon());
+                  m.setZIndex(undefined);
                 });
 
                 // Highlight the clicked marker
@@ -489,27 +496,27 @@ function HomeContainer() {
                 marker.setZIndex(google.maps.Marker.MAX_ZINDEX + 1);
                 selectedMarker = marker;
 
-                  let photoHtml = '<p>No photo available.</p>';
-                  const firstPhoto = place.photos?.[0];
+                let photoHtml = '<p>No photo available.</p>';
+                const firstPhoto = place.photos?.[0];
 
-                  //photo API call
-                  if (firstPhoto?.name) {
-                    const photoUrl = `https://places.googleapis.com/v1/${firstPhoto.name}/media?maxWidthPx=400&key=${googleMapsAPIKey}`;
-                    photoHtml = `<img src="${photoUrl}" style="max-width:250px; max-height:150px; object-fit:cover; border-radius:4px;" />`;
-                  }
+                //photo API call
+                if (firstPhoto?.name) {
+                  const photoUrl = `https://places.googleapis.com/v1/${firstPhoto.name}/media?maxWidthPx=400&key=${googleMapsAPIKey}`;
+                  photoHtml = `<img src="${photoUrl}" style="max-width:250px; max-height:150px; object-fit:cover; border-radius:4px;" />`;
+                }
 
-                  const content = `
+                const content = `
                     <div style="max-width:300px;">
                       <h3>${place.displayName?.text || 'Unnamed Place'}</h3>
                       ${photoHtml}
                       <p>${place.formattedAddress || ''}</p>
                     </div>`;
 
-                  infoWindow.setContent(content);
-                  infoWindow.open(map, marker);
-                  activeInfoWindowRef.current = infoWindow;
-                });
+                infoWindow.setContent(content);
+                infoWindow.open(map, marker);
+                activeInfoWindowRef.current = infoWindow;
               });
+            });
 
 
           } catch (err) {
@@ -636,7 +643,7 @@ function HomeContainer() {
     const modifiedSearchQuery2 = searchQuery + modifiedSearchQuery;
     console.log("Search Query: " + searchQuery);
     console.log("Modified Search Query: " + modifiedSearchQuery2);
-    
+
     const body = {
 
       "textQuery": modifiedSearchQuery2,
@@ -812,6 +819,10 @@ function HomeContainer() {
         });
         // Only try to access value if we're sure the ref exists
         setOrigin_string(originRef.current.value || "");
+        setOriginValid(true); //this ensures that origin is valid when checking in trigger search
+      }
+      else {
+        setOriginValid(false); //Not a valid entry so false
       }
     });
 
@@ -828,47 +839,59 @@ function HomeContainer() {
         });
         // Only try to access value if we're sure the ref exists
         setDestination_string(destRef.current.value || "");
+        setDestinationValid(true); //this ensures that destination is valid when checking in trigger search
+      }
+      else {
+        setDestinationValid(false); //again, if false then invalid
       }
     });
 
+    // any typing or erasing after selecting flips the state back to false because it would be invalid
+    originRef.current.addEventListener("input", () => setOriginValid(false));
+    destRef.current.addEventListener("input", () => setDestinationValid(false));
 
   };
 
 
   const triggerSearch = () => {
-    console.log("Triggered Search");
-    console.log("Origin: " + origin_string);
-    console.log("Destination: " + destination_string);
-    // Clear circle and markers
-    markersRef.current.forEach((marker) => marker.setMap(null));
-    markersRef.current = [];
-    circlesRef.current.forEach((circle) => circle.setMap(null));
-    circlesRef.current = [];
 
-    // Clear previous route line
-    if (directionsRendererRef.current) {
-      directionsRendererRef.current.setMap(null);
-      directionsRendererRef.current = null;
+    //Determine if search is valid
+    if (originValid && destinationValid) {
+      console.log("Triggered Search");
+      console.log("Origin: " + origin_string);
+      console.log("Destination: " + destination_string);
+      // Clear circle and markers
+      markersRef.current.forEach((marker) => marker.setMap(null));
+      markersRef.current = [];
+      circlesRef.current.forEach((circle) => circle.setMap(null));
+      circlesRef.current = [];
+
+      // Clear previous route line
+      if (directionsRendererRef.current) {
+        directionsRendererRef.current.setMap(null);
+        directionsRendererRef.current = null;
+      }
+
+      // Clear start/end markers
+      if (startMarkerRef.current) {
+        startMarkerRef.current.setMap(null);
+        startMarkerRef.current = null;
+      }
+      if (endMarkerRef.current) {
+        endMarkerRef.current.setMap(null);
+        endMarkerRef.current = null;
+      }
+
+
+      if (mapInstance.current) {
+        searchRoute(mapInstance.current);
+      } else {
+        console.warn("Map not ready yet");
+      }
     }
-
-    // Clear start/end markers
-    if (startMarkerRef.current) {
-      startMarkerRef.current.setMap(null);
-      startMarkerRef.current = null;
+    else {
+      alert("Please input valid origin and destination fields");
     }
-    if (endMarkerRef.current) {
-      endMarkerRef.current.setMap(null);
-      endMarkerRef.current = null;
-    }
-
-
-    if (mapInstance.current) {
-      searchRoute(mapInstance.current);
-    } else {
-      console.warn("Map not ready yet");
-    }
-
-
   };
 
   ///
