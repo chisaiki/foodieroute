@@ -85,6 +85,12 @@ export default function HomeView({
     }
   }, []);
 
+// after your windowWidth‐tracking useEffect:
+useEffect(() => {
+  if (windowWidth <= 800 && isSidebarCollapsed) {
+    setIsSidebarCollapsed(false);
+  }
+}, [windowWidth, isSidebarCollapsed]);
 
 
 
