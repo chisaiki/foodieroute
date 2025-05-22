@@ -67,6 +67,7 @@ export default function HomeView({
   const [isSearchCollapsed, setIsSearchCollapsed] = useState(false);
 
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [desktopView, setDesktopView] = useState(true);
 
   useEffect(() => {
     const handleResize = () => {
@@ -78,7 +79,13 @@ export default function HomeView({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
+
+    if (windowWidth<= 800 ){
+      setDesktopView(false)
+    }
   }, []);
+
+
 
 
   const listDiv = () => {
@@ -99,51 +106,51 @@ export default function HomeView({
     }
   }
 
-  if (windowWidth <= 800) { // Mobile Layout
-    return (
-      <div>
-      <div className="temp-nav-bar">
-          <NavigationButtons></NavigationButtons>
-      </div>
-      <div className="maingridwraper">
+  // if (windowWidth <= 800) { // Mobile Layout
+  //   return (
+  //     <div>
+  //     <div className="temp-nav-bar">
+  //         <NavigationButtons></NavigationButtons>
+  //     </div>
+  //     <div className="maingridwraper">
   
-        <div className="mainGrid"> 
-            <div className="mainGridTwo">
-              <MapView mapRef={mapRef} ></MapView>
-            </div>
+  //       <div className="mainGrid"> 
+  //           <div className="mainGridTwo">
+  //             <MapView mapRef={mapRef} ></MapView>
+  //           </div>
 
-            <ListView
-                places={places}
-                selectedPlaceName={selectedPlaceName}
-                // Clicking the same item again will deselect it
-                onSelect={(name: string | null) =>
-                  setSelectedPlaceName((prev) => (prev === name ? null : name))
-                }
-              />
+  //           <ListView
+  //               places={places}
+  //               selectedPlaceName={selectedPlaceName}
+  //               // Clicking the same item again will deselect it
+  //               onSelect={(name: string | null) =>
+  //                 setSelectedPlaceName((prev) => (prev === name ? null : name))
+  //               }
+  //             />
 
-            <div className="mainGridThree">
-              <SearchBoxView
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                triggerSearch={triggerSearch}
-                originRef={originRef}
-                destRef={destRef}
-                travelMode={travelMode}
-                setTravelMode={setTravelMode}
-                sortMethod={sortMethod}
-                setSortMethod={setSortMethod}
-                className="bg-indigo-50 p-4"
-                selectedPlaceName={selectedPlaceName}
-                setSelectedPlaceName={setSelectedPlaceName}
-              />
-            </div>
+  //           <div className="mainGridThree">
+  //             <SearchBoxView
+  //               searchQuery={searchQuery}
+  //               setSearchQuery={setSearchQuery}
+  //               triggerSearch={triggerSearch}
+  //               originRef={originRef}
+  //               destRef={destRef}
+  //               travelMode={travelMode}
+  //               setTravelMode={setTravelMode}
+  //               sortMethod={sortMethod}
+  //               setSortMethod={setSortMethod}
+  //               className="bg-indigo-50 p-4"
+  //               selectedPlaceName={selectedPlaceName}
+  //               setSelectedPlaceName={setSelectedPlaceName}
+  //             />
+  //           </div>
 
 
-        </div>
-      </div>
-    </div>
-    );
-  } else {  // Desktop Layout
+  //       </div>
+  //     </div>
+  //   </div>
+  //   );
+  // } else {  // Desktop Layout
     return (
       <div>
 
@@ -205,5 +212,5 @@ export default function HomeView({
         </div>
       </div>
     );
-  }
+  //}
 }
