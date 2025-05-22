@@ -49,7 +49,7 @@ export default function SettingsView({ veg, toggleVeg, history, onHistoryClick }
   function UserSettings() {
     return (
       <div>          
-        <h1>Settings</h1>
+        <h1 className="text-xl font-semibold mb-2">Preferences</h1>
         <button
         onClick={toggleVeg}
         className={`px-4 py-2 rounded-md text-white ${
