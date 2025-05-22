@@ -56,7 +56,8 @@ aside::-webkit-scrollbar-track {
   grid-area: one;
   min-width: 140px;
   transition: all 0.3s ease;
-  overflow: hidden;
+  /* overflow: hidden; */
+  /* overflow-y: auto; */
 }
 
 .mainGridOne.collapsed {
@@ -100,6 +101,9 @@ aside::-webkit-scrollbar-track {
 
   .mainGridOne {
     min-width: 0;
+       /* allow list to scroll on mobile only */
+   max-height: 50vh;
+   overflow-y: auto;
   }
 
   .mainGridTwo {
