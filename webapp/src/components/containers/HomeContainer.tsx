@@ -127,6 +127,7 @@ function HomeContainer() {
     setDest(historyItem.destination);
     setOrigin_string(historyItem.origin_string);
     setDestination_string(historyItem.destination_string);
+    setTravelMode(historyItem.travelMode); //restores mode of transport
     setOriginValid(true);
     setDestinationValid(true);
 
