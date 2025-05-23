@@ -315,8 +315,8 @@ function HomeContainer() {
           const distanceInMeters = response.routes[0]?.legs[0]?.distance?.value || 0;
           const distanceInMiles = distanceInMeters / 1609.34;
 
-          if (distanceInMiles > 3) {
-            alert("The selected route is over 3 miles.");
+          if (distanceInMiles > 15) {
+            alert("The selected route is over 15 miles, please make it shorter");
             return; // Stop further execution
           }
           // For driving, walking, or biking, just show the route as-is
@@ -401,7 +401,7 @@ function HomeContainer() {
             });
           }
 
-          return;
+          //return;
           // Generate points along the route for further place search
           const encodedPolyline = response.routes[0].overview_polyline;
           const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
