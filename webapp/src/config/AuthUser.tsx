@@ -10,6 +10,8 @@ export interface UserData {
   uid: string;
   email: string;
   vegetarian: boolean;
+  halal: boolean;
+  vegan: boolean;
   history: UserHistory[];
 }
 
@@ -55,6 +57,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             uid: currentUser.uid,
             email: currentUser.email || "",
             vegetarian: false,
+            halal: false,
+            vegan: false,
             history: [],
           };
           await setDoc(userRef, newUser);
@@ -99,6 +103,31 @@ export const updateUserVegetarianStatus = async (userId: string, newStatus: bool
     return false;
   }
 };
+
+// Toggle “halal” flag
+export const updateUserHalalStatus = async (userId: string, newStatus: boolean) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, { halal: newStatus });
+    return true;
+  } catch (error) {
+    console.error("Error updating halal status:", error);
+    return false;
+  }
+};
+
+// Toggle “vegan” flag
+export const updateUserVeganStatus = async (userId: string, newStatus: boolean) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, { vegan: newStatus });
+    return true;
+  } catch (error) {
+    console.error("Error updating vegan status:", error);
+    return false;
+  }
+};
+
 
 // Custom hook for updating user history
 export const useUpdateHistory = () => {

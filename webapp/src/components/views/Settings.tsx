@@ -6,12 +6,20 @@ import { UserHistory } from "../../config/AuthUser";
 interface SettingsViewProps {
   veg: boolean;
   toggleVeg: () => void; // Function to toggle veg status
+  halal: boolean;
+ toggleHalal: () => void;     // halal toggle
+
+ vegan: boolean;
+ toggleVegan: () => void; 
   history: UserHistory[];
   onHistoryClick: (historyItem: UserHistory) => void;
 
 }
 
-export default function SettingsView({ veg, toggleVeg, history, onHistoryClick } : SettingsViewProps)
+export default function SettingsView({ veg, toggleVeg, halal,
+ toggleHalal,
+ vegan,
+ toggleVegan,history, onHistoryClick } : SettingsViewProps)
 {
 
   function UserHistory() {
@@ -47,23 +55,74 @@ export default function SettingsView({ veg, toggleVeg, history, onHistoryClick }
   }
 
   function UserSettings() {
+  //   return (
+  //     <div>          
+  //       <h1 className="text-xl font-semibold mb-2">Preferences</h1>
+  //       <button
+  //       onClick={toggleVeg}
+  //       className={`px-4 py-2 rounded-md text-white ${
+  //         veg ? "bg-green-500" : "bg-gray-500"
+  //       }`}
+  //       >
+  //       {veg ? "Vegetarian: YES" : "Vegetarian: NO"}
+  //       </button>
+  //       {/* Halal toggle */}
+  //     <button
+  //       onClick={toggleHalal}
+  //       className={`ml-2 px-4 py-2 rounded-md text-white ${
+  //         halal ? "bg-green-500" : "bg-gray-500"
+  //       }`}
+  //     >
+  //       {halal ? "Halal: YES" : "Halal: NO"}
+  //     </button>
+
+  //     {/* Vegan toggle */}
+  //     <button
+  //       onClick={toggleVegan}
+  //       className={`ml-2 px-4 py-2 rounded-md text-white ${
+  //         vegan ? "bg-green-500" : "bg-gray-500"
+  //       }`}
+  //     >
+  //       {vegan ? "Vegan: YES" : "Vegan: NO"}
+  //     </button>
+  //     </div>
+  //   )
+  // }
+
     return (
-      <div>          
-        <h1 className="text-xl font-semibold mb-2">Preferences</h1>
+    <div>
+      <h1 className="text-xl font-semibold mb-2">Preferences</h1>
+      <div className="flex flex-col space-y-2">
         <button
-        onClick={toggleVeg}
-        className={`px-4 py-2 rounded-md text-white ${
-          veg ? "bg-green-500" : "bg-gray-500"
-        }`}
+          onClick={toggleVeg}
+          className={`px-4 py-2 rounded-md text-white ${
+            veg ? "bg-green-500" : "bg-gray-500"
+          }`}
         >
-        {veg ? "Vegetarian: YES" : "Vegetarian: NO"}
+          {veg ? "Vegetarian: YES" : "Vegetarian: NO"}
+        </button>
+
+        <button
+          onClick={toggleHalal}
+          className={`px-4 py-2 rounded-md text-white ${
+            halal ? "bg-green-500" : "bg-gray-500"
+          }`}
+        >
+          {halal ? "Halal: YES" : "Halal: NO"}
+        </button>
+
+        <button
+          onClick={toggleVegan}
+          className={`px-4 py-2 rounded-md text-white ${
+            vegan ? "bg-green-500" : "bg-gray-500"
+          }`}
+        >
+          {vegan ? "Vegan: YES" : "Vegan: NO"}
         </button>
       </div>
-    )
-  }
-
-  
-
+    </div>
+  );
+}
 
   return(
   <div>
